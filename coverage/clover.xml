@@ -1,37 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1619816107816" clover="3.2.0">
-  <project timestamp="1619816107816" name="All files">
-    <metrics statements="31" coveredstatements="31" conditionals="13" coveredconditionals="13" methods="7" coveredmethods="7" elements="51" coveredelements="51" complexity="0" loc="31" ncloc="31" packages="1" files="3" classes="3"/>
+<coverage generated="1620024430924" clover="3.2.0">
+  <project timestamp="1620024430924" name="All files">
+    <metrics statements="30" coveredstatements="30" conditionals="14" coveredconditionals="14" methods="7" coveredmethods="7" elements="51" coveredelements="51" complexity="0" loc="30" ncloc="30" packages="1" files="3" classes="3"/>
     <file name="index.ts" path="/home/daniele/credit-service/src/index.ts">
-      <metrics statements="13" coveredstatements="13" conditionals="7" coveredconditionals="7" methods="3" coveredmethods="3"/>
+      <metrics statements="15" coveredstatements="15" conditionals="8" coveredconditionals="8" methods="3" coveredmethods="3"/>
       <line num="1" count="1" type="stmt"/>
       <line num="10" count="1" type="stmt"/>
-      <line num="13" count="4" type="cond" truecount="2" falsecount="0"/>
-      <line num="14" count="4" type="cond" truecount="1" falsecount="0"/>
-      <line num="16" count="2" type="stmt"/>
-      <line num="19" count="2" type="stmt"/>
-      <line num="21" count="1" type="stmt"/>
-      <line num="31" count="1" type="stmt"/>
-      <line num="43" count="1" type="stmt"/>
-      <line num="44" count="4" type="stmt"/>
-      <line num="65" count="4" type="stmt"/>
-      <line num="66" count="4" type="stmt"/>
-      <line num="69" count="4" type="cond" truecount="2" falsecount="0"/>
+      <line num="13" count="6" type="stmt"/>
+      <line num="15" count="6" type="cond" truecount="2" falsecount="0"/>
+      <line num="16" count="6" type="stmt"/>
+      <line num="18" count="2" type="stmt"/>
+      <line num="21" count="4" type="stmt"/>
+      <line num="23" count="1" type="stmt"/>
+      <line num="33" count="3" type="cond" truecount="2" falsecount="0"/>
+      <line num="34" count="1" type="stmt"/>
+      <line num="47" count="1" type="stmt"/>
+      <line num="48" count="6" type="stmt"/>
+      <line num="62" count="6" type="stmt"/>
+      <line num="63" count="6" type="stmt"/>
+      <line num="66" count="6" type="cond" truecount="2" falsecount="0"/>
     </file>
     <file name="projector.ts" path="/home/daniele/credit-service/src/projector.ts">
-      <metrics statements="12" coveredstatements="12" conditionals="2" coveredconditionals="2" methods="2" coveredmethods="2"/>
+      <metrics statements="9" coveredstatements="9" conditionals="2" coveredconditionals="2" methods="2" coveredmethods="2"/>
       <line num="1" count="1" type="stmt"/>
       <line num="2" count="1" type="stmt"/>
       <line num="4" count="1" type="stmt"/>
-      <line num="6" count="9" type="cond" truecount="2" falsecount="0"/>
-      <line num="7" count="4" type="stmt"/>
-      <line num="8" count="4" type="stmt"/>
-      <line num="9" count="4" type="stmt"/>
-      <line num="10" count="4" type="stmt"/>
-      <line num="12" count="5" type="stmt"/>
-      <line num="13" count="5" type="stmt"/>
-      <line num="15" count="5" type="stmt"/>
-      <line num="18" count="4" type="stmt"/>
+      <line num="6" count="10" type="cond" truecount="2" falsecount="0"/>
+      <line num="7" count="5" type="stmt"/>
+      <line num="8" count="5" type="stmt"/>
+      <line num="10" count="5" type="stmt"/>
+      <line num="11" count="5" type="stmt"/>
+      <line num="14" count="6" type="stmt"/>
     </file>
     <file name="types.ts" path="/home/daniele/credit-service/src/types.ts">
       <metrics statements="6" coveredstatements="6" conditionals="4" coveredconditionals="4" methods="2" coveredmethods="2"/>

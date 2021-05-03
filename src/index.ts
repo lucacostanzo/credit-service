@@ -10,6 +10,8 @@ import {
 import { Command, CommandType, EventType } from "./types";
 
 async function businnesLogic(cmd: Command) {
+  const MIN_USE_CREDITS_AMOUNT = 100;
+
   if (
     await isLastMessageAfterGlobalPosition(`creditAccount-${cmd.data.id}`, cmd)
   ) {
@@ -28,27 +30,22 @@ async function businnesLogic(cmd: Command) {
         },
       });
     case CommandType.USE_CREDITS:
-      return emitEvent({
-        category: "creditAccount",
-        id: cmd.data.id,
-        event: EventType.CREDITS_USED,
-        data: {
+      if (cmd.data.amountCredit > MIN_USE_CREDITS_AMOUNT) {
+        return emitEvent({
+          category: "creditAccount",
           id: cmd.data.id,
-          amountCredit: cmd.data.amountCredit,
-        },
-      });
+          event: EventType.CREDITS_USED,
+          data: {
+            id: cmd.data.id,
+            amountCredit: cmd.data.amountCredit,
+          },
+        });
+      }
   }
 }
 
 export async function run() {
   return combineSubscriber(
-    /* subscribe(
-      {
-        streamName: "credits:command",
-      },
-      businnesLogic
-    ), */
-
     subscribe(
       {
         streamName: "creditAccount:command",

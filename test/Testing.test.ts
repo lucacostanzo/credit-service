@@ -33,7 +33,7 @@ it("Accredito balance ad un dato account", async () => {
   });
 });
 
-it("Addebito sotto al minimo balance ad un dato account", async () => { //////////////////////////////////IMPLEMNETARE
+it("Addebito sotto al minimo balance ad un dato account", async () => {
   let idAccount1 = v4();
   testUtils.setupMessageStore([
     {
@@ -46,16 +46,15 @@ it("Addebito sotto al minimo balance ad un dato account", async () => { ////////
     },
   ]);
 
+  expect(await runBalanceProjector(idAccount1)).toEqual(0);
+
   await testUtils.expectIdempotency(run, () => {
     let event = testUtils.getStreamMessages("creditAccount");
-    expect(event).toHaveLength(1);
-    expect(event[0].type).toEqual(EventType.CREDITS_USED);
-    expect(event[0].data.id).toEqual(idAccount1);
-    expect(event[0].data.amountCredit).toEqual(30);
+    expect(event).toHaveLength(0);
   });
 });
 
-it("Addebito balance ad un dato account", async () => {
+it("Addebito balance oltre il minimo ad un dato account", async () => {
   let idAccount1 = v4();
   testUtils.setupMessageStore([
     {
@@ -63,7 +62,7 @@ it("Addebito balance ad un dato account", async () => {
       stream_name: "creditAccount:command-" + idAccount1,
       data: {
         id: idAccount1,
-        amountCredit: 30,
+        amountCredit: 130,
       },
     },
   ]);
@@ -73,8 +72,10 @@ it("Addebito balance ad un dato account", async () => {
     expect(event).toHaveLength(1);
     expect(event[0].type).toEqual(EventType.CREDITS_USED);
     expect(event[0].data.id).toEqual(idAccount1);
-    expect(event[0].data.amountCredit).toEqual(30);
+    expect(event[0].data.amountCredit).toEqual(130);
   });
+
+  expect(await runBalanceProjector(idAccount1)).toEqual(-130);
 });
 
 it("Calcolo balance di un utente", async () => {
@@ -127,7 +128,7 @@ it("Calcolo balance negativo di un utente", async () => {
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
-        amountCredit: 30,
+        amountCredit: 130,
       },
     },
     {
@@ -135,7 +136,7 @@ it("Calcolo balance negativo di un utente", async () => {
       stream_name: "creditAccount-" + idAccount2,
       data: {
         id: idAccount2,
-        amountCredit: 30,
+        amountCredit: 230,
       },
     },
     {
@@ -143,7 +144,7 @@ it("Calcolo balance negativo di un utente", async () => {
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
-        amountCredit: 20,
+        amountCredit: 100,
       },
     },
     {
@@ -151,12 +152,12 @@ it("Calcolo balance negativo di un utente", async () => {
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
-        amountCredit: 50,
+        amountCredit: 100,
       },
     },
   ]);
 
-  expect(await runBalanceProjector(idAccount1)).toEqual(-100);
+  expect(await runBalanceProjector(idAccount1)).toEqual(-330);
 });
 
 it("Calcolo balance misto di un utente", async () => {
@@ -168,7 +169,7 @@ it("Calcolo balance misto di un utente", async () => {
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
-        amountCredit: 10,
+        amountCredit: 70,
       },
     },
     {
@@ -184,7 +185,7 @@ it("Calcolo balance misto di un utente", async () => {
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
-        amountCredit: 20,
+        amountCredit: 50,
       },
     },
     {
@@ -192,10 +193,10 @@ it("Calcolo balance misto di un utente", async () => {
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
-        amountCredit: 50,
+        amountCredit: 100,
       },
     },
   ]);
 
-  expect(await runBalanceProjector(idAccount1)).toEqual(-20);
+  expect(await runBalanceProjector(idAccount1)).toEqual(20);
 });
