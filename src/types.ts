@@ -19,6 +19,7 @@ export type Command = EarnCredits | UseCredits;
 export enum EventType {
   CREDITS_EARNED = "CREDITS_EARNED",
   CREDITS_USED = "CREDITS_USED",
+  CREDITS_ERROR = "CREDITS_ERROR",
 }
 
 export type CreditsEarned = Message<
@@ -29,5 +30,9 @@ export type CreditsUsed = Message<
   EventType.CREDITS_USED,
   { id: string; amountCredit: number }
 >;
+export type CreditsError = Message<
+  EventType.CREDITS_ERROR,
+  { id: string; type: string }
+>;
 
-export type Event = CreditsEarned | CreditsUsed;
+export type Event = CreditsEarned | CreditsUsed | CreditsError;

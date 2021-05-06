@@ -33,6 +33,25 @@ it("Accredito balance ad un dato account", async () => {
   });
 });
 
+it("Accredito balance negativo ad un dato account", async () => {
+  let idAccount1 = v4();
+  testUtils.setupMessageStore([
+    {
+      type: CommandType.EARN_CREDITS,
+      stream_name: "creditAccount:command-" + idAccount1,
+      data: {
+        id: idAccount1,
+        amountCredit: -30,
+      },
+    },
+  ]);
+
+  await testUtils.expectIdempotency(run, () => {
+    let event = testUtils.getStreamMessages("creditAccount");
+    expect(event).toHaveLength(0);
+  });
+});
+
 it("Addebito sotto al minimo balance ad un dato account", async () => {
   let idAccount1 = v4();
   testUtils.setupMessageStore([
@@ -50,13 +69,24 @@ it("Addebito sotto al minimo balance ad un dato account", async () => {
 
   await testUtils.expectIdempotency(run, () => {
     let event = testUtils.getStreamMessages("creditAccount");
-    expect(event).toHaveLength(0);
+    expect(event).toHaveLength(1);
+    expect(event[0].type).toEqual(EventType.CREDITS_ERROR);
+    expect(event[0].data.id).toEqual(idAccount1);
+    expect(event[0].data.type).toEqual("FondiNonSufficienti");
   });
 });
 
-it("Addebito balance oltre il minimo ad un dato account", async () => {
+it("Addebito balance oltre il minimo e oltre il balance ad un dato account", async () => {
   let idAccount1 = v4();
   testUtils.setupMessageStore([
+    {
+      type: EventType.CREDITS_EARNED,
+      stream_name: "creditAccount-" + idAccount1,
+      data: {
+        id: idAccount1,
+        amountCredit: 100,
+      },
+    },
     {
       type: CommandType.USE_CREDITS,
       stream_name: "creditAccount:command-" + idAccount1,
@@ -69,13 +99,44 @@ it("Addebito balance oltre il minimo ad un dato account", async () => {
 
   await testUtils.expectIdempotency(run, () => {
     let event = testUtils.getStreamMessages("creditAccount");
-    expect(event).toHaveLength(1);
-    expect(event[0].type).toEqual(EventType.CREDITS_USED);
-    expect(event[0].data.id).toEqual(idAccount1);
-    expect(event[0].data.amountCredit).toEqual(130);
+    expect(event).toHaveLength(2);
+    expect(event[1].type).toEqual(EventType.CREDITS_ERROR);
+    expect(event[1].data.id).toEqual(idAccount1);
+    expect(event[1].data.type).toEqual("AmmontoMinimoNonRaggiunto");
   });
 
-  expect(await runBalanceProjector(idAccount1)).toEqual(-130);
+  expect(await runBalanceProjector(idAccount1)).toEqual(100);
+});
+
+it("Addebito balance oltre il minimo balance ad un dato account", async () => {
+  let idAccount1 = v4();
+  testUtils.setupMessageStore([
+    {
+      type: EventType.CREDITS_EARNED,
+      stream_name: "creditAccount-" + idAccount1,
+      data: {
+        id: idAccount1,
+        amountCredit: 130,
+      },
+    },
+    {
+      type: CommandType.USE_CREDITS,
+      stream_name: "creditAccount:command-" + idAccount1,
+      data: {
+        id: idAccount1,
+        amountCredit: 100,
+      },
+    },
+  ]);
+
+  await testUtils.expectIdempotency(run, () => {
+    let event = testUtils.getStreamMessages("creditAccount");
+    expect(event).toHaveLength(2);
+    expect(event[1].type).toEqual(EventType.CREDITS_USED);
+    expect(event[1].data.id).toEqual(idAccount1);
+  });
+
+  expect(await runBalanceProjector(idAccount1)).toEqual(30);
 });
 
 it("Calcolo balance di un utente", async () => {
@@ -119,47 +180,6 @@ it("Calcolo balance di un utente", async () => {
   expect(await runBalanceProjector(idAccount1)).toEqual(100);
 });
 
-it("Calcolo balance negativo di un utente", async () => {
-  let idAccount1 = v4();
-  let idAccount2 = v4();
-  testUtils.setupMessageStore([
-    {
-      type: EventType.CREDITS_USED,
-      stream_name: "creditAccount-" + idAccount1,
-      data: {
-        id: idAccount1,
-        amountCredit: 130,
-      },
-    },
-    {
-      type: EventType.CREDITS_USED,
-      stream_name: "creditAccount-" + idAccount2,
-      data: {
-        id: idAccount2,
-        amountCredit: 230,
-      },
-    },
-    {
-      type: EventType.CREDITS_USED,
-      stream_name: "creditAccount-" + idAccount1,
-      data: {
-        id: idAccount1,
-        amountCredit: 100,
-      },
-    },
-    {
-      type: EventType.CREDITS_USED,
-      stream_name: "creditAccount-" + idAccount1,
-      data: {
-        id: idAccount1,
-        amountCredit: 100,
-      },
-    },
-  ]);
-
-  expect(await runBalanceProjector(idAccount1)).toEqual(-330);
-});
-
 it("Calcolo balance misto di un utente", async () => {
   let idAccount1 = v4();
   let idAccount2 = v4();
@@ -199,4 +219,49 @@ it("Calcolo balance misto di un utente", async () => {
   ]);
 
   expect(await runBalanceProjector(idAccount1)).toEqual(20);
+});
+
+it("Calcolo balance misto di un utente in tempo passato", async () => {
+  let idAccount1 = v4();
+  let timePast = new Date();
+  timePast.setMonth(timePast.getMonth() - 14);
+  testUtils.setupMessageStore([
+    {
+      type: EventType.CREDITS_EARNED,
+      stream_name: "creditAccount-" + idAccount1,
+      data: {
+        id: idAccount1,
+        amountCredit: 70,
+      },
+      time: timePast,
+    },
+    {
+      type: EventType.CREDITS_EARNED,
+      stream_name: "creditAccount-" + idAccount1,
+      data: {
+        id: idAccount1,
+        amountCredit: 300,
+      },
+    },
+    {
+      type: EventType.CREDITS_EARNED,
+      stream_name: "creditAccount-" + idAccount1,
+      data: {
+        id: idAccount1,
+        amountCredit: 50,
+      },
+      time: timePast,
+    },
+
+    {
+      type: EventType.CREDITS_USED,
+      stream_name: "creditAccount-" + idAccount1,
+      data: {
+        id: idAccount1,
+        amountCredit: 100,
+      },
+    },
+  ]);
+
+  expect(await runBalanceProjector(idAccount1)).toEqual(200);
 });

@@ -6,6 +6,7 @@ import {
   readLastMessage,
   combineSubscriber,
 } from "@keix/message-store-client";
+import { runBalanceProjector } from "./projector";
 
 import { Command, CommandType, EventType } from "./types";
 
@@ -20,17 +21,25 @@ async function businnesLogic(cmd: Command) {
 
   switch (cmd.type) {
     case CommandType.EARN_CREDITS:
-      return emitEvent({
-        category: "creditAccount",
-        id: cmd.data.id,
-        event: EventType.CREDITS_EARNED,
-        data: {
+      if (cmd.data.amountCredit > 0) {
+        return emitEvent({
+          category: "creditAccount",
           id: cmd.data.id,
-          amountCredit: cmd.data.amountCredit,
-        },
-      });
+          event: EventType.CREDITS_EARNED,
+          data: {
+            id: cmd.data.id,
+            amountCredit: cmd.data.amountCredit,
+          },
+        });
+      } else {
+        return;
+      }
     case CommandType.USE_CREDITS:
-      if (cmd.data.amountCredit > MIN_USE_CREDITS_AMOUNT) {
+      let balance = await runBalanceProjector(cmd.data.id);
+      if (
+        balance >= MIN_USE_CREDITS_AMOUNT &&
+        balance - cmd.data.amountCredit > 0
+      ) {
         return emitEvent({
           category: "creditAccount",
           id: cmd.data.id,
@@ -38,6 +47,19 @@ async function businnesLogic(cmd: Command) {
           data: {
             id: cmd.data.id,
             amountCredit: cmd.data.amountCredit,
+          },
+        });
+      } else {
+        return emitEvent({
+          category: "creditAccount",
+          id: cmd.data.id,
+          event: EventType.CREDITS_ERROR,
+          data: {
+            id: cmd.data.id,
+            type:
+              balance >= MIN_USE_CREDITS_AMOUNT
+                ? "AmmontoMinimoNonRaggiunto"
+                : "FondiNonSufficienti",
           },
         });
       }
