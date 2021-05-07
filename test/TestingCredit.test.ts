@@ -1,6 +1,6 @@
 import { testUtils } from "@keix/message-store-client";
 import { v4 } from "uuid";
-import { run } from "../src";
+import { runCredits } from "../src";
 import { runBalanceProjector } from "../src/projector";
 import { CommandType, EventType } from "../src/types";
 
@@ -24,7 +24,7 @@ it("Accredito balance ad un dato account", async () => {
     },
   ]);
 
-  await testUtils.expectIdempotency(run, () => {
+  await testUtils.expectIdempotency(runCredits, () => {
     let event = testUtils.getStreamMessages("creditAccount");
     expect(event).toHaveLength(1);
     expect(event[0].type).toEqual(EventType.CREDITS_EARNED);
@@ -46,7 +46,7 @@ it("Accredito balance negativo ad un dato account", async () => {
     },
   ]);
 
-  await testUtils.expectIdempotency(run, () => {
+  await testUtils.expectIdempotency(runCredits, () => {
     let event = testUtils.getStreamMessages("creditAccount");
     expect(event).toHaveLength(0);
   });
@@ -67,7 +67,7 @@ it("Addebito sotto al minimo balance ad un dato account", async () => {
 
   expect(await runBalanceProjector(idAccount1)).toEqual(0);
 
-  await testUtils.expectIdempotency(run, () => {
+  await testUtils.expectIdempotency(runCredits, () => {
     let event = testUtils.getStreamMessages("creditAccount");
     expect(event).toHaveLength(1);
     expect(event[0].type).toEqual(EventType.CREDITS_ERROR);
@@ -97,7 +97,7 @@ it("Addebito balance oltre il minimo e oltre il balance ad un dato account", asy
     },
   ]);
 
-  await testUtils.expectIdempotency(run, () => {
+  await testUtils.expectIdempotency(runCredits, () => {
     let event = testUtils.getStreamMessages("creditAccount");
     expect(event).toHaveLength(2);
     expect(event[1].type).toEqual(EventType.CREDITS_ERROR);
@@ -129,7 +129,7 @@ it("Addebito balance oltre il minimo balance ad un dato account", async () => {
     },
   ]);
 
-  await testUtils.expectIdempotency(run, () => {
+  await testUtils.expectIdempotency(runCredits, () => {
     let event = testUtils.getStreamMessages("creditAccount");
     expect(event).toHaveLength(2);
     expect(event[1].type).toEqual(EventType.CREDITS_USED);

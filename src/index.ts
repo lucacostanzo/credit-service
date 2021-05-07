@@ -66,7 +66,7 @@ async function businnesLogic(cmd: Command) {
   }
 }
 
-export async function run() {
+export async function runCredits() {
   return combineSubscriber(
     subscribe(
       {
