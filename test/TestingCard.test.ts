@@ -1,21 +1,26 @@
 import { testUtils } from "@keix/message-store-client";
 import { v4 } from "uuid";
 import { runGiftCard } from "../src/index2";
-import { runCardExistProjector } from "../src/projector";
-import { CommandType, EventType } from "../src/types";
+import {
+  runCardExistProjector,
+  runVerifyAmountProjector,
+  runVerifyPendingProjector,
+} from "../src/projector";
+import { CommandTypeCredit, EventTypeCredit } from "../src/typesCredits";
+import { CommandTypeCard, EventTypeCard } from "../src/typesCard";
 
 it("Aggiungere una carta", async () => {
   let idCard = v4();
   testUtils.setupMessageStore([
     {
-      type: CommandType.ADD_GIFT_CARD,
+      type: CommandTypeCard.ADD_GIFT_CARD,
       stream_name: "giftCard:command-" + idCard,
       data: {
         id: idCard,
         name: "Amazon",
         description: "Carta per comprarti il frigo",
         image_url: "https://img.it",
-        amounts_available: [5, 10, 20, 30, 50],
+        amounts: [5, 10, 20, 30, 50],
       },
     },
   ]);
@@ -23,10 +28,10 @@ it("Aggiungere una carta", async () => {
   await testUtils.expectIdempotency(runGiftCard, () => {
     let event = testUtils.getStreamMessages("giftCard");
     expect(event).toHaveLength(1);
-    expect(event[0].type).toEqual(EventType.GIFT_CARD_ADDED);
+    expect(event[0].type).toEqual(EventTypeCard.GIFT_CARD_ADDED);
     expect(event[0].data.id).toEqual(idCard);
     expect(event[0].data.name).toEqual("Amazon");
-    expect(event[0].data.amounts_available).toEqual([5, 10, 20, 30, 50]);
+    expect(event[0].data.amounts).toEqual([5, 10, 20, 30, 50]);
   });
 });
 
@@ -34,14 +39,14 @@ it("Trovare una carta esistente", async () => {
   let idCard = v4();
   testUtils.setupMessageStore([
     {
-      type: EventType.GIFT_CARD_ADDED,
+      type: EventTypeCard.GIFT_CARD_ADDED,
       stream_name: "giftCard-" + idCard,
       data: {
         id: idCard,
         name: "Amazon",
         description: "Carta per comprarti il frigo",
         image_url: "https://img.it",
-        amounts_available: [5, 10, 20, 30, 50],
+        amounts: [5, 10, 20, 30, 50],
       },
     },
   ]);
@@ -54,14 +59,14 @@ it("Trovare una carta non esistente", async () => {
   let idCardinesistente = v4();
   testUtils.setupMessageStore([
     {
-      type: EventType.GIFT_CARD_ADDED,
+      type: EventTypeCard.GIFT_CARD_ADDED,
       stream_name: "giftCard-" + idCard,
       data: {
         id: idCard,
         name: "Amazon",
         description: "Carta per comprarti il frigo",
         image_url: "https://img.it",
-        amounts_available: [5, 10, 20, 30, 50],
+        amounts: [5, 10, 20, 30, 50],
       },
     },
   ]);
@@ -73,18 +78,18 @@ it("Trovare una carta esistente ma adesso rimossa", async () => {
   let idCard = v4();
   testUtils.setupMessageStore([
     {
-      type: EventType.GIFT_CARD_ADDED,
+      type: EventTypeCard.GIFT_CARD_ADDED,
       stream_name: "giftCard-" + idCard,
       data: {
         id: idCard,
         name: "Amazon",
         description: "Carta per comprarti il frigo",
         image_url: "https://img.it",
-        amounts_available: [5, 10, 20, 30, 50],
+        amounts: [5, 10, 20, 30, 50],
       },
     },
     {
-      type: EventType.GIFT_CARD_REMOVED,
+      type: EventTypeCard.GIFT_CARD_REMOVED,
       stream_name: "giftCard-" + idCard,
       data: {
         id: idCard,
@@ -99,7 +104,7 @@ it("Rimuovere una carta non esistente", async () => {
   let idCard = v4();
   testUtils.setupMessageStore([
     {
-      type: CommandType.REMOVE_GIFT_CARD,
+      type: CommandTypeCard.REMOVE_GIFT_CARD,
       stream_name: "giftCard:command-" + idCard,
       data: {
         id: idCard,
@@ -110,7 +115,7 @@ it("Rimuovere una carta non esistente", async () => {
   await testUtils.expectIdempotency(runGiftCard, () => {
     let event = testUtils.getStreamMessages("giftCard");
     expect(event).toHaveLength(1);
-    expect(event[0].type).toEqual(EventType.GIFT_CARD_ERROR);
+    expect(event[0].type).toEqual(EventTypeCard.GIFT_CARD_ERROR);
     expect(event[0].data.type).toEqual("CardNotExist");
   });
 });
@@ -119,18 +124,18 @@ it("Rimuovere una carta", async () => {
   let idCard = v4();
   testUtils.setupMessageStore([
     {
-      type: EventType.GIFT_CARD_ADDED,
+      type: EventTypeCard.GIFT_CARD_ADDED,
       stream_name: "giftCard-" + idCard,
       data: {
         id: idCard,
         name: "Amazon",
         description: "Carta per comprarti il frigo",
         image_url: "https://img.it",
-        amounts_available: [5, 10, 20, 30, 50],
+        amounts: [5, 10, 20, 30, 50],
       },
     },
     {
-      type: CommandType.REMOVE_GIFT_CARD,
+      type: CommandTypeCard.REMOVE_GIFT_CARD,
       stream_name: "giftCard:command-" + idCard,
       data: {
         id: idCard,
@@ -141,56 +146,250 @@ it("Rimuovere una carta", async () => {
   await testUtils.expectIdempotency(runGiftCard, () => {
     let event = testUtils.getStreamMessages("giftCard");
     expect(event).toHaveLength(2);
-    expect(event[1].type).toEqual(EventType.GIFT_CARD_REMOVED);
+    expect(event[1].type).toEqual(EventTypeCard.GIFT_CARD_REMOVED);
     expect(event[1].data.id).toEqual(idCard);
   });
 });
 
-/* 
-it("All'istante zero, tutti gli account hanno un balance di zero crediti", async () => {
-  let idAccount1 = v4();
-  testUtils.setupMessageStore([]);
-
-  expect(await runBalanceProjector(idAccount1)).toEqual(0);
-});
-
-it("Accredito balance ad un dato account", async () => {
-  let idAccount1 = v4();
+it("Update di una carta", async () => {
+  let idCard = v4();
   testUtils.setupMessageStore([
     {
-      type: CommandType.EARN_CREDITS,
-      stream_name: "creditAccount:command-" + idAccount1,
+      type: EventTypeCard.GIFT_CARD_ADDED,
+      stream_name: "giftCard-" + idCard,
       data: {
-        id: idAccount1,
-        amountCredit: 30,
+        id: idCard,
+        name: "Amazon",
+        description: "Carta per comprarti il frigo",
+        image_url: "https://img.it",
+        amounts: [5, 10, 20, 30, 50],
+      },
+    },
+    {
+      type: CommandTypeCard.UPDATE_GIFT_CARD,
+      stream_name: "giftCard:command-" + idCard,
+      data: {
+        id: idCard,
+        name: "Amazon",
+        description: "Carta per comprarti il frullatore",
       },
     },
   ]);
 
-  await testUtils.expectIdempotency(runCredits, () => {
-    let event = testUtils.getStreamMessages("creditAccount");
+  await testUtils.expectIdempotency(runGiftCard, () => {
+    let event = testUtils.getStreamMessages("giftCard");
+    expect(event).toHaveLength(2);
+    expect(event[1].type).toEqual(EventTypeCard.GIFT_CARD_UPDATED);
+    expect(event[1].data.id).toEqual(idCard);
+  });
+});
+
+it("Update di una carta che non esiste", async () => {
+  let idCard = v4();
+  testUtils.setupMessageStore([
+    {
+      type: CommandTypeCard.UPDATE_GIFT_CARD,
+      stream_name: "giftCard:command-" + idCard,
+      data: {
+        id: idCard,
+        name: "Amazon",
+        description: "Carta per comprarti il frullatore",
+      },
+    },
+  ]);
+
+  await testUtils.expectIdempotency(runGiftCard, () => {
+    let event = testUtils.getStreamMessages("giftCard");
     expect(event).toHaveLength(1);
-    expect(event[0].type).toEqual(EventType.CREDITS_EARNED);
-    expect(event[0].data.id).toEqual(idAccount1);
-    expect(event[0].data.amountCredit).toEqual(30);
+    expect(event[0].type).toEqual(EventTypeCard.GIFT_CARD_ERROR);
+    expect(event[0].data.type).toEqual("CardNotExist");
   });
 });
 
-it("Accredito balance negativo ad un dato account", async () => {
-  let idAccount1 = v4();
+it("Verifica se un taglio esiste", async () => {
+  let idCard = v4();
   testUtils.setupMessageStore([
     {
-      type: CommandType.EARN_CREDITS,
-      stream_name: "creditAccount:command-" + idAccount1,
+      type: EventTypeCard.GIFT_CARD_ADDED,
+      stream_name: "giftCard-" + idCard,
       data: {
-        id: idAccount1,
-        amountCredit: -30,
+        id: idCard,
+        name: "Amazon",
+        description: "Carta per comprarti il frigo",
+        image_url: "https://img.it",
+        amounts: [5, 10, 20, 30, 50],
       },
     },
   ]);
 
-  await testUtils.expectIdempotency(runCredits, () => {
-    let event = testUtils.getStreamMessages("creditAccount");
-    expect(event).toHaveLength(0);
+  expect(await runVerifyAmountProjector(idCard, 10)).toEqual(true);
+});
+
+it("Verifica se un taglio non esiste", async () => {
+  let idCard = v4();
+  testUtils.setupMessageStore([
+    {
+      type: EventTypeCard.GIFT_CARD_ADDED,
+      stream_name: "giftCard-" + idCard,
+      data: {
+        id: idCard,
+        name: "Amazon",
+        description: "Carta per comprarti il frigo",
+        image_url: "https://img.it",
+        amounts: [5, 10, 20, 30, 50],
+      },
+    },
+  ]);
+
+  expect(await runVerifyAmountProjector(idCard, 12)).toEqual(false);
+});
+
+it("Usare una carta avendo tutto in regola", async () => {
+  let idCard = v4();
+  let idAccount1 = v4();
+  testUtils.setupMessageStore([
+    {
+      type: EventTypeCredit.CREDITS_EARNED,
+      stream_name: "creditAccount-" + idAccount1,
+      data: {
+        id: idAccount1,
+        amountCredit: 1000,
+      },
+    },
+    {
+      type: EventTypeCard.GIFT_CARD_ADDED,
+      stream_name: "giftCard-" + idCard,
+      data: {
+        id: idCard,
+        name: "Amazon",
+        description: "Carta per comprarti il frigo",
+        image_url: "https://img.it",
+        amounts: [5, 10, 20, 30, 50],
+      },
+    },
+    {
+      type: CommandTypeCard.REDEEM_GIFT_CARD,
+      stream_name: "giftCard:command-" + idCard,
+      data: {
+        id: idCard,
+        userId: idAccount1,
+        amount: 50,
+      },
+    },
+    {
+      type: EventTypeCredit.CREDITS_USED,
+      stream_name: "creditAccount-" + idAccount1,
+      data: {
+        id: idAccount1,
+        amountCredit: 50,
+      },
+    },
+  ]);
+
+  await testUtils.expectIdempotency(runGiftCard, () => {
+    let eventG = testUtils.getStreamMessages("giftCard");
+    expect(eventG).toHaveLength(3);
+    expect(eventG[0].type).toEqual(EventTypeCard.GIFT_CARD_ADDED);
+    expect(eventG[1].type).toEqual(EventTypeCard.GIFT_CARD_REDEEM_PROCESSING);
+    expect(eventG[2].type).toEqual(EventTypeCard.GIFT_CARD_REDEEM_SUCCEDED);
   });
-});*/
+
+  /* await testUtils.expectIdempotency(runGiftCard, () => {
+    let eventG = testUtils.getStreamMessages("giftCard");
+    let eventC = testUtils.getStreamMessages("creditAccount");
+    expect(eventG).toHaveLength(3);
+    expect(eventG[0].type).toEqual(EventType.GIFT_CARD_ADDED);
+    expect(eventG[1].type).toEqual(EventType.GIFT_CARD_REDEEM_PROCESSING);
+    expect(eventG[2].type).toEqual(EventType.GIFT_CARD_REDEEM_SUCCEDED);
+    expect(eventC).toHaveLength(2);
+    expect(eventG[1].type).toEqual(EventType.GIFT_CARD_REMOVED);
+    expect(eventG[1].data.id).toEqual(idCard);
+  }); */
+});
+
+it("Usare una carta avendo un amount non pervenuto", async () => {
+  let idCard = v4();
+  let idAccount1 = v4();
+  testUtils.setupMessageStore([
+    {
+      type: EventTypeCredit.CREDITS_EARNED,
+      stream_name: "creditAccount-" + idAccount1,
+      data: {
+        id: idAccount1,
+        amountCredit: 1000,
+      },
+    },
+    {
+      type: EventTypeCard.GIFT_CARD_ADDED,
+      stream_name: "giftCard-" + idCard,
+      data: {
+        id: idCard,
+        name: "Amazon",
+        description: "Carta per comprarti il frigo",
+        image_url: "https://img.it",
+        amounts: [5, 10, 20, 30, 50],
+      },
+    },
+    {
+      type: CommandTypeCard.REDEEM_GIFT_CARD,
+      stream_name: "giftCard:command-" + idCard,
+      data: {
+        id: idCard,
+        userId: idAccount1,
+        amount: 55,
+      },
+    },
+  ]);
+
+  await testUtils.expectIdempotency(runGiftCard, () => {
+    let eventG = testUtils.getStreamMessages("giftCard");
+    expect(eventG).toHaveLength(3);
+    expect(eventG[0].type).toEqual(EventTypeCard.GIFT_CARD_ADDED);
+    expect(eventG[1].type).toEqual(EventTypeCard.GIFT_CARD_REDEEM_PROCESSING);
+    expect(eventG[2].type).toEqual(EventTypeCard.GIFT_CARD_REDEEM_FAILED);
+  });
+
+  /* await testUtils.expectIdempotency(runGiftCard, () => {
+    let eventG = testUtils.getStreamMessages("giftCard");
+    let eventC = testUtils.getStreamMessages("creditAccount");
+    expect(eventG).toHaveLength(3);
+    expect(eventG[0].type).toEqual(EventType.GIFT_CARD_ADDED);
+    expect(eventG[1].type).toEqual(EventType.GIFT_CARD_REDEEM_PROCESSING);
+    expect(eventG[2].type).toEqual(EventType.GIFT_CARD_REDEEM_SUCCEDED);
+    expect(eventC).toHaveLength(2);
+    expect(eventG[1].type).toEqual(EventType.GIFT_CARD_REMOVED);
+    expect(eventG[1].data.id).toEqual(idCard);
+  }); */
+});
+
+it("Ritorna false se non è in processing", async () => {
+  let idCard = v4();
+  testUtils.setupMessageStore([
+    {
+      type: EventTypeCard.GIFT_CARD_ADDED,
+      stream_name: "giftCard-" + idCard,
+      data: {
+        id: idCard,
+        name: "Amazon",
+        description: "Carta per comprarti il frigo",
+        image_url: "https://img.it",
+        amounts: [5, 10, 20, 30, 50],
+      },
+    },
+  ]);
+
+  expect(await runVerifyPendingProjector(idCard)).toEqual(false);
+});
+
+it("Ritorna true se è in processing", async () => {
+  let idCard = v4();
+  testUtils.setupMessageStore([
+    {
+      type: EventTypeCard.GIFT_CARD_REDEEM_PROCESSING,
+      stream_name: "giftCard-" + idCard,
+      data: {},
+    },
+  ]);
+
+  expect(await runVerifyPendingProjector(idCard)).toEqual(true);
+});

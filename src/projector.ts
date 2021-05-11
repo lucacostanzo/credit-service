@@ -1,16 +1,17 @@
 import { runProjector } from "@keix/message-store-client";
-import { Event, EventType } from "./types";
+import { EventCredits, EventTypeCredit } from "./typesCredits";
+import { EventCard, EventTypeCard } from "./typesCard";
 
 export async function runBalanceProjector(id: string): Promise<number> {
   const MAX_USE_CREDITS_DELAY = 365;
 
   let datetime = new Date();
   datetime.setDate(datetime.getDay() - MAX_USE_CREDITS_DELAY);
-  function reducer(res: number, next: Event) {
+  function reducer(res: number, next: EventCredits) {
     if (next.time >= datetime) {
-      if (next.type === EventType.CREDITS_USED) {
+      if (next.type === EventTypeCredit.CREDITS_USED) {
         res -= next.data.amountCredit;
-      } else if (next.type === EventType.CREDITS_EARNED) {
+      } else if (next.type === EventTypeCredit.CREDITS_EARNED) {
         res += next.data.amountCredit;
       }
     }
@@ -20,16 +21,42 @@ export async function runBalanceProjector(id: string): Promise<number> {
 }
 
 export async function runCardExistProjector(id: string): Promise<boolean> {
-  function reducer(res: boolean, next: Event) {
+  function reducer(prev: boolean, next: EventCard) {
     if (
-      next.type === EventType.GIFT_CARD_ADDED ||
-      next.type === EventType.GIFT_CARD_UPDATED
+      next.type === EventTypeCard.GIFT_CARD_ADDED ||
+      next.type === EventTypeCard.GIFT_CARD_UPDATED
     ) {
-      res = true;
-      return res;
+      return true;
     } else {
-      res = false;
-      return res;
+      return false;
+    }
+  }
+  return runProjector({ streamName: `giftCard-${id}` }, reducer, false);
+}
+
+export async function runVerifyAmountProjector(
+  id: string,
+  amount: number
+): Promise<boolean> {
+  function reducer(prev: boolean, next: EventCard) {
+    if (
+      next.type === EventTypeCard.GIFT_CARD_ADDED ||
+      next.type === EventTypeCard.GIFT_CARD_UPDATED
+    ) {
+      return next.data.amounts.includes(amount);
+    } else {
+      return prev;
+    }
+  }
+  return runProjector({ streamName: `giftCard-${id}` }, reducer, false);
+}
+
+export async function runVerifyPendingProjector(id: string): Promise<boolean> {
+  function reducer(prev: boolean, next: EventCard) {
+    if (next.type === EventTypeCard.GIFT_CARD_REDEEM_PROCESSING) {
+      return true;
+    } else {
+      return false;
     }
   }
   return runProjector({ streamName: `giftCard-${id}` }, reducer, false);

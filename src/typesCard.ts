@@ -1,63 +1,48 @@
 import type { Message } from "@keix/message-store-client";
 
-export enum CommandType {
-  EARN_CREDITS = "EARN_CREDITS",
-  USE_CREDITS = "USE_CREDITS",
+export enum CommandTypeCard {
   ADD_GIFT_CARD = "ADD_GIFT_CARD",
   UPDATE_GIFT_CARD = "UPDATE_GIFT_CARD",
   REMOVE_GIFT_CARD = "REMOVE_GIFT_CARD",
   REDEEM_GIFT_CARD = "REDEEM_GIFT_CARD",
 }
 
-export type EarnCredits = Message<
-  CommandType.EARN_CREDITS,
-  { id: string; amountCredit: number }
->;
-export type UseCredits = Message<
-  CommandType.USE_CREDITS,
-  { id: string; amountCredit: number }
->;
 export type UpdateGiftCard = Message<
-  CommandType.UPDATE_GIFT_CARD,
+  CommandTypeCard.UPDATE_GIFT_CARD,
   {
     id: string;
     name: string;
     description: string;
     image_url: string;
-    amounts_available: number[];
+    amounts: number[];
   }
 >;
 export type RemoveGiftCard = Message<
-  CommandType.REMOVE_GIFT_CARD,
+  CommandTypeCard.REMOVE_GIFT_CARD,
   { id: string }
 >;
 export type AddedGiftCard = Message<
-  CommandType.ADD_GIFT_CARD,
+  CommandTypeCard.ADD_GIFT_CARD,
   {
     id: string;
     name: string;
     description: string;
     image_url: string;
-    amounts_available: number[];
+    amounts: number[];
   }
 >;
 export type RedeemGiftCard = Message<
-  CommandType.REDEEM_GIFT_CARD,
-  { id: string; amount: number }
+  CommandTypeCard.REDEEM_GIFT_CARD,
+  { id: string; userId: string; amount: number }
 >;
 
-export type Command =
-  | EarnCredits
-  | UseCredits
+export type CommandCard =
   | UpdateGiftCard
   | RemoveGiftCard
   | AddedGiftCard
   | RedeemGiftCard;
 
-export enum EventType {
-  CREDITS_EARNED = "CREDITS_EARNED",
-  CREDITS_USED = "CREDITS_USED",
-  CREDITS_ERROR = "CREDITS_ERROR",
+export enum EventTypeCard {
   GIFT_CARD_ERROR = "GIFT_CARD_ERROR",
   GIFT_CARD_UPDATED = "GIFT_CARD_UPDATED",
   GIFT_CARD_REMOVED = "GIFT_CARD_REMOVED",
@@ -67,28 +52,16 @@ export enum EventType {
   GIFT_CARD_REDEEM_SUCCEDED = "GIFT_CARD_REDEEM_SUCCEDED",
 }
 
-export type CreditsEarned = Message<
-  EventType.CREDITS_EARNED,
-  { id: string; amountCredit: number }
->;
-export type CreditsUsed = Message<
-  EventType.CREDITS_USED,
-  { id: string; amountCredit: number }
->;
-export type CreditsError = Message<
-  EventType.CREDITS_ERROR,
-  { id: string; type: string }
->;
 export type GiftCardUpdated = Message<
-  EventType.GIFT_CARD_UPDATED,
-  { id: string }
+  EventTypeCard.GIFT_CARD_UPDATED,
+  { id: string; amounts: number[] }
 >;
 export type GiftCardRemoved = Message<
-  EventType.GIFT_CARD_REMOVED,
+  EventTypeCard.GIFT_CARD_REMOVED,
   { id: string }
 >;
 export type GiftCardAdded = Message<
-  EventType.GIFT_CARD_ADDED,
+  EventTypeCard.GIFT_CARD_ADDED,
   {
     id: string;
     amounts: number[];
@@ -98,25 +71,22 @@ export type GiftCardAdded = Message<
   }
 >;
 export type GiftCardRedeemProcessing = Message<
-  EventType.GIFT_CARD_REDEEM_PROCESSING,
+  EventTypeCard.GIFT_CARD_REDEEM_PROCESSING,
   {}
 >;
 export type GiftCardRedeemFailed = Message<
-  EventType.GIFT_CARD_REDEEM_FAILED,
+  EventTypeCard.GIFT_CARD_REDEEM_FAILED,
   { id: string; type: string }
 >;
 export type GiftCardRedeemSucceded = Message<
-  EventType.GIFT_CARD_REDEEM_SUCCEDED,
+  EventTypeCard.GIFT_CARD_REDEEM_SUCCEDED,
   { id: string }
 >;
 export type GiftCardError = Message<
-  EventType.GIFT_CARD_ERROR,
+  EventTypeCard.GIFT_CARD_ERROR,
   { type: string }
 >;
-export type Event =
-  | CreditsEarned
-  | CreditsUsed
-  | CreditsError
+export type EventCard =
   | GiftCardUpdated
   | GiftCardRemoved
   | GiftCardAdded

@@ -8,9 +8,13 @@ import {
 } from "@keix/message-store-client";
 import { runBalanceProjector } from "./projector";
 
-import { Command, CommandType, EventType } from "./types";
+import {
+  CommandCredits,
+  CommandTypeCredit,
+  EventTypeCredit,
+} from "./typesCredits";
 
-async function businnesLogic(cmd: Command) {
+async function businnesLogic(cmd: CommandCredits) {
   const MIN_USE_CREDITS_AMOUNT = 100;
 
   if (
@@ -20,12 +24,12 @@ async function businnesLogic(cmd: Command) {
   }
 
   switch (cmd.type) {
-    case CommandType.EARN_CREDITS:
+    case CommandTypeCredit.EARN_CREDITS:
       if (cmd.data.amountCredit > 0) {
         return emitEvent({
           category: "creditAccount",
           id: cmd.data.id,
-          event: EventType.CREDITS_EARNED,
+          event: EventTypeCredit.CREDITS_EARNED,
           data: {
             id: cmd.data.id,
             amountCredit: cmd.data.amountCredit,
@@ -34,7 +38,7 @@ async function businnesLogic(cmd: Command) {
       } else {
         return;
       }
-    case CommandType.USE_CREDITS:
+    case CommandTypeCredit.USE_CREDITS:
       let balance = await runBalanceProjector(cmd.data.id);
       if (
         balance >= MIN_USE_CREDITS_AMOUNT &&
@@ -43,9 +47,10 @@ async function businnesLogic(cmd: Command) {
         return emitEvent({
           category: "creditAccount",
           id: cmd.data.id,
-          event: EventType.CREDITS_USED,
+          event: EventTypeCredit.CREDITS_USED,
           data: {
             id: cmd.data.id,
+            idCard: cmd.data.idCard,
             amountCredit: cmd.data.amountCredit,
           },
         });
@@ -53,7 +58,7 @@ async function businnesLogic(cmd: Command) {
         return emitEvent({
           category: "creditAccount",
           id: cmd.data.id,
-          event: EventType.CREDITS_ERROR,
+          event: EventTypeCredit.CREDITS_ERROR,
           data: {
             id: cmd.data.id,
             type:

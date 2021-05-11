@@ -2,7 +2,7 @@ import { testUtils } from "@keix/message-store-client";
 import { v4 } from "uuid";
 import { runCredits } from "../src";
 import { runBalanceProjector } from "../src/projector";
-import { CommandType, EventType } from "../src/types";
+import { CommandTypeCredit, EventTypeCredit } from "../src/typesCredits";
 
 it("All'istante zero, tutti gli account hanno un balance di zero crediti", async () => {
   let idAccount1 = v4();
@@ -15,7 +15,7 @@ it("Accredito balance ad un dato account", async () => {
   let idAccount1 = v4();
   testUtils.setupMessageStore([
     {
-      type: CommandType.EARN_CREDITS,
+      type: CommandTypeCredit.EARN_CREDITS,
       stream_name: "creditAccount:command-" + idAccount1,
       data: {
         id: idAccount1,
@@ -27,7 +27,7 @@ it("Accredito balance ad un dato account", async () => {
   await testUtils.expectIdempotency(runCredits, () => {
     let event = testUtils.getStreamMessages("creditAccount");
     expect(event).toHaveLength(1);
-    expect(event[0].type).toEqual(EventType.CREDITS_EARNED);
+    expect(event[0].type).toEqual(EventTypeCredit.CREDITS_EARNED);
     expect(event[0].data.id).toEqual(idAccount1);
     expect(event[0].data.amountCredit).toEqual(30);
   });
@@ -37,7 +37,7 @@ it("Accredito balance negativo ad un dato account", async () => {
   let idAccount1 = v4();
   testUtils.setupMessageStore([
     {
-      type: CommandType.EARN_CREDITS,
+      type: CommandTypeCredit.EARN_CREDITS,
       stream_name: "creditAccount:command-" + idAccount1,
       data: {
         id: idAccount1,
@@ -56,7 +56,7 @@ it("Addebito sotto al minimo balance ad un dato account", async () => {
   let idAccount1 = v4();
   testUtils.setupMessageStore([
     {
-      type: CommandType.USE_CREDITS,
+      type: CommandTypeCredit.USE_CREDITS,
       stream_name: "creditAccount:command-" + idAccount1,
       data: {
         id: idAccount1,
@@ -70,7 +70,7 @@ it("Addebito sotto al minimo balance ad un dato account", async () => {
   await testUtils.expectIdempotency(runCredits, () => {
     let event = testUtils.getStreamMessages("creditAccount");
     expect(event).toHaveLength(1);
-    expect(event[0].type).toEqual(EventType.CREDITS_ERROR);
+    expect(event[0].type).toEqual(EventTypeCredit.CREDITS_ERROR);
     expect(event[0].data.id).toEqual(idAccount1);
     expect(event[0].data.type).toEqual("FondiNonSufficienti");
   });
@@ -80,7 +80,7 @@ it("Addebito balance oltre il minimo e oltre il balance ad un dato account", asy
   let idAccount1 = v4();
   testUtils.setupMessageStore([
     {
-      type: EventType.CREDITS_EARNED,
+      type: EventTypeCredit.CREDITS_EARNED,
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
@@ -88,7 +88,7 @@ it("Addebito balance oltre il minimo e oltre il balance ad un dato account", asy
       },
     },
     {
-      type: CommandType.USE_CREDITS,
+      type: CommandTypeCredit.USE_CREDITS,
       stream_name: "creditAccount:command-" + idAccount1,
       data: {
         id: idAccount1,
@@ -100,7 +100,7 @@ it("Addebito balance oltre il minimo e oltre il balance ad un dato account", asy
   await testUtils.expectIdempotency(runCredits, () => {
     let event = testUtils.getStreamMessages("creditAccount");
     expect(event).toHaveLength(2);
-    expect(event[1].type).toEqual(EventType.CREDITS_ERROR);
+    expect(event[1].type).toEqual(EventTypeCredit.CREDITS_ERROR);
     expect(event[1].data.id).toEqual(idAccount1);
     expect(event[1].data.type).toEqual("AmmontoMinimoNonRaggiunto");
   });
@@ -112,7 +112,7 @@ it("Addebito balance oltre il minimo balance ad un dato account", async () => {
   let idAccount1 = v4();
   testUtils.setupMessageStore([
     {
-      type: EventType.CREDITS_EARNED,
+      type: EventTypeCredit.CREDITS_EARNED,
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
@@ -120,7 +120,7 @@ it("Addebito balance oltre il minimo balance ad un dato account", async () => {
       },
     },
     {
-      type: CommandType.USE_CREDITS,
+      type: CommandTypeCredit.USE_CREDITS,
       stream_name: "creditAccount:command-" + idAccount1,
       data: {
         id: idAccount1,
@@ -132,7 +132,7 @@ it("Addebito balance oltre il minimo balance ad un dato account", async () => {
   await testUtils.expectIdempotency(runCredits, () => {
     let event = testUtils.getStreamMessages("creditAccount");
     expect(event).toHaveLength(2);
-    expect(event[1].type).toEqual(EventType.CREDITS_USED);
+    expect(event[1].type).toEqual(EventTypeCredit.CREDITS_USED);
     expect(event[1].data.id).toEqual(idAccount1);
   });
 
@@ -144,7 +144,7 @@ it("Calcolo balance di un utente", async () => {
   let idAccount2 = v4();
   testUtils.setupMessageStore([
     {
-      type: EventType.CREDITS_EARNED,
+      type: EventTypeCredit.CREDITS_EARNED,
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
@@ -152,7 +152,7 @@ it("Calcolo balance di un utente", async () => {
       },
     },
     {
-      type: EventType.CREDITS_EARNED,
+      type: EventTypeCredit.CREDITS_EARNED,
       stream_name: "creditAccount-" + idAccount2,
       data: {
         id: idAccount2,
@@ -160,7 +160,7 @@ it("Calcolo balance di un utente", async () => {
       },
     },
     {
-      type: EventType.CREDITS_EARNED,
+      type: EventTypeCredit.CREDITS_EARNED,
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
@@ -168,7 +168,7 @@ it("Calcolo balance di un utente", async () => {
       },
     },
     {
-      type: EventType.CREDITS_EARNED,
+      type: EventTypeCredit.CREDITS_EARNED,
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
@@ -185,7 +185,7 @@ it("Calcolo balance misto di un utente", async () => {
   let idAccount2 = v4();
   testUtils.setupMessageStore([
     {
-      type: EventType.CREDITS_EARNED,
+      type: EventTypeCredit.CREDITS_EARNED,
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
@@ -193,7 +193,7 @@ it("Calcolo balance misto di un utente", async () => {
       },
     },
     {
-      type: EventType.CREDITS_EARNED,
+      type: EventTypeCredit.CREDITS_EARNED,
       stream_name: "creditAccount-" + idAccount2,
       data: {
         id: idAccount2,
@@ -201,7 +201,7 @@ it("Calcolo balance misto di un utente", async () => {
       },
     },
     {
-      type: EventType.CREDITS_EARNED,
+      type: EventTypeCredit.CREDITS_EARNED,
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
@@ -209,7 +209,7 @@ it("Calcolo balance misto di un utente", async () => {
       },
     },
     {
-      type: EventType.CREDITS_USED,
+      type: EventTypeCredit.CREDITS_USED,
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
@@ -227,7 +227,7 @@ it("Calcolo balance misto di un utente in tempo passato", async () => {
   timePast.setMonth(timePast.getMonth() - 14);
   testUtils.setupMessageStore([
     {
-      type: EventType.CREDITS_EARNED,
+      type: EventTypeCredit.CREDITS_EARNED,
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
@@ -236,7 +236,7 @@ it("Calcolo balance misto di un utente in tempo passato", async () => {
       time: timePast,
     },
     {
-      type: EventType.CREDITS_EARNED,
+      type: EventTypeCredit.CREDITS_EARNED,
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
@@ -244,7 +244,7 @@ it("Calcolo balance misto di un utente in tempo passato", async () => {
       },
     },
     {
-      type: EventType.CREDITS_EARNED,
+      type: EventTypeCredit.CREDITS_EARNED,
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
@@ -254,7 +254,7 @@ it("Calcolo balance misto di un utente in tempo passato", async () => {
     },
 
     {
-      type: EventType.CREDITS_USED,
+      type: EventTypeCredit.CREDITS_USED,
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
