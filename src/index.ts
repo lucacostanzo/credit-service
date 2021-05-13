@@ -6,6 +6,7 @@ import {
   readLastMessage,
   combineSubscriber,
 } from "@keix/message-store-client";
+import { v4 } from "uuid";
 import { runBalanceProjector } from "./projector";
 
 import {
@@ -32,6 +33,7 @@ async function businnesLogic(cmd: CommandCredits) {
           event: EventTypeCredit.CREDITS_EARNED,
           data: {
             id: cmd.data.id,
+            transactionId: cmd.data.transactionId ?? v4(),
             amountCredit: cmd.data.amountCredit,
           },
         });
@@ -50,7 +52,7 @@ async function businnesLogic(cmd: CommandCredits) {
           event: EventTypeCredit.CREDITS_USED,
           data: {
             id: cmd.data.id,
-            idCard: cmd.data.idCard,
+            transactionId: cmd.data.transactionId ?? v4(),
             amountCredit: cmd.data.amountCredit,
           },
         });

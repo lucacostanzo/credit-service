@@ -7,11 +7,11 @@ export enum CommandTypeCredit {
 
 export type EarnCredits = Message<
   CommandTypeCredit.EARN_CREDITS,
-  { id: string; amountCredit: number }
+  { id: string; amountCredit: number; transactionId?: string }
 >;
 export type UseCredits = Message<
   CommandTypeCredit.USE_CREDITS,
-  { id: string; amountCredit: number; idCard: string }
+  { id: string; amountCredit: number; transactionId?: string }
 >;
 
 export type CommandCredits = EarnCredits | UseCredits;
@@ -24,11 +24,11 @@ export enum EventTypeCredit {
 
 export type CreditsEarned = Message<
   EventTypeCredit.CREDITS_EARNED,
-  { id: string; amountCredit: number }
+  { id: string; amountCredit: number; transactionId: string }
 >;
 export type CreditsUsed = Message<
   EventTypeCredit.CREDITS_USED,
-  { id: string; amountCredit: number; idCard: string }
+  { id: string; amountCredit: number; transactionId: string }
 >;
 export type CreditsError = Message<
   EventTypeCredit.CREDITS_ERROR,

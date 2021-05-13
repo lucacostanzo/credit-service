@@ -10,6 +10,7 @@ import {
   runCardExistProjector,
   runVerifyAmountProjector,
   runVerifyPendingProjector,
+  runVerifyProcessingProjector,
 } from "./projector";
 
 import {
@@ -88,27 +89,31 @@ async function businnesLogic(cmd: CommandCard) {
         });
       }
     case CommandTypeCard.REDEEM_GIFT_CARD:
+      if (await runVerifyPendingProjector(cmd.data.transactionId)) {
+        return;
+      }
       await emitEvent({
-        category: "giftCard",
-        id: cmd.data.userId,
-        event: EventTypeCard.GIFT_CARD_REDEEM_PROCESSING,
-        data: {},
+        category: "giftCardTransaction",
+        id: cmd.data.transactionId,
+        event: EventTypeCard.GIFT_CARD_REDEEM_PENDING,
+        data: cmd.data,
       });
       if (
-        (await runCardExistProjector(cmd.data.id)) &&
-        (await runVerifyAmountProjector(cmd.data.id, cmd.data.amount))
+        (await runCardExistProjector(cmd.data.idCard)) &&
+        (await runVerifyAmountProjector(cmd.data.idCard, cmd.data.amount))
       ) {
         return await sendCommand({
           command: CommandTypeCredit.USE_CREDITS,
           category: "creditAccount",
           data: {
-            id: cmd.data.userId,
+            transactionId: cmd.data.transactionId,
             amountCredit: cmd.data.amount,
+            id: cmd.data.id,
           },
         });
       } else {
         return emitEvent({
-          category: "giftCard",
+          category: "giftCardTransaction",
           id: cmd.data.id,
           event: EventTypeCard.GIFT_CARD_REDEEM_FAILED,
           data: {
@@ -121,20 +126,24 @@ async function businnesLogic(cmd: CommandCard) {
 }
 
 async function businnesLogicCredits(event: EventCredits) {
-  if (event.type === EventTypeCredit.CREDITS_USED) {
-    if (runVerifyPendingProjector(event.data.idCard)) return;
-  }
   switch (event.type) {
     case EventTypeCredit.CREDITS_USED:
-      return emitEvent({
-        category: "giftCard",
+      if (await runVerifyProcessingProjector(event.data.transactionId)) return;
+      return await emitEvent({
+        category: "giftCardTransaction",
+        id: event.data.transactionId,
+        event: EventTypeCard.GIFT_CARD_REDEEM_PROCESSING,
+        data: event.data,
+      });
+    /* await emitEvent({
+        category: "giftCardTransaction",
         id: event.data.idCard,
         event: EventTypeCard.GIFT_CARD_REDEEM_SUCCEDED,
         data: {
           id: event.data.idCard,
           amount: 20,
         },
-      });
+      }); */
     case EventTypeCredit.CREDITS_EARNED:
       return console.log(event, "GUADAGNO");
   }
@@ -145,6 +154,12 @@ export async function runGiftCard() {
     subscribe(
       {
         streamName: "giftCard:command",
+      },
+      businnesLogic
+    ),
+    subscribe(
+      {
+        streamName: "giftCardTransaction:command",
       },
       businnesLogic
     ),
@@ -166,4 +181,7 @@ async function isLastMessageAfterGlobalPosition(
     streamName,
   });
   return lastMsg && lastMsg.global_position > global_position;
+}
+function runVerifyProcessingProjectorProjector(transactionId: string) {
+  throw new Error("Function not implemented.");
 }

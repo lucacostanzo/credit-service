@@ -33,7 +33,7 @@ export type AddedGiftCard = Message<
 >;
 export type RedeemGiftCard = Message<
   CommandTypeCard.REDEEM_GIFT_CARD,
-  { id: string; userId: string; amount: number }
+  { id: string; transactionId: string; idCard: string; amount: number }
 >;
 
 export type CommandCard =
@@ -47,6 +47,7 @@ export enum EventTypeCard {
   GIFT_CARD_UPDATED = "GIFT_CARD_UPDATED",
   GIFT_CARD_REMOVED = "GIFT_CARD_REMOVED",
   GIFT_CARD_ADDED = "GIFT_CARD_ADDED",
+  GIFT_CARD_REDEEM_PENDING = "GIFT_CARD_REDEEM_PENDING",
   GIFT_CARD_REDEEM_PROCESSING = "GIFT_CARD_REDEEM_PROCESSING",
   GIFT_CARD_REDEEM_FAILED = "GIFT_CARD_REDEEM_FAILED",
   GIFT_CARD_REDEEM_SUCCEDED = "GIFT_CARD_REDEEM_SUCCEDED",
@@ -74,6 +75,10 @@ export type GiftCardRedeemProcessing = Message<
   EventTypeCard.GIFT_CARD_REDEEM_PROCESSING,
   {}
 >;
+export type GiftCardRedeemPending = Message<
+  EventTypeCard.GIFT_CARD_REDEEM_PENDING,
+  {}
+>;
 export type GiftCardRedeemFailed = Message<
   EventTypeCard.GIFT_CARD_REDEEM_FAILED,
   { id: string; type: string }
@@ -90,6 +95,7 @@ export type EventCard =
   | GiftCardUpdated
   | GiftCardRemoved
   | GiftCardAdded
+  | GiftCardRedeemPending
   | GiftCardRedeemProcessing
   | GiftCardRedeemFailed
   | GiftCardRedeemSucceded

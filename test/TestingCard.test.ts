@@ -5,6 +5,7 @@ import {
   runCardExistProjector,
   runVerifyAmountProjector,
   runVerifyPendingProjector,
+  runVerifyProcessingProjector,
 } from "../src/projector";
 import { CommandTypeCredit, EventTypeCredit } from "../src/typesCredits";
 import { CommandTypeCard, EventTypeCard } from "../src/typesCard";
@@ -246,6 +247,7 @@ it("Verifica se un taglio non esiste", async () => {
 
 it("Usare una carta avendo tutto in regola", async () => {
   let idCard = v4();
+  let idTrans = v4();
   let idAccount1 = v4();
   testUtils.setupMessageStore([
     {
@@ -269,9 +271,10 @@ it("Usare una carta avendo tutto in regola", async () => {
     },
     {
       type: CommandTypeCard.REDEEM_GIFT_CARD,
-      stream_name: "giftCard:command-" + idCard,
+      stream_name: "giftCardTransaction:command-" + idTrans,
       data: {
-        id: idCard,
+        transactionId: idTrans,
+        idCard: idCard,
         userId: idAccount1,
         amount: 50,
       },
@@ -288,28 +291,19 @@ it("Usare una carta avendo tutto in regola", async () => {
 
   await testUtils.expectIdempotency(runGiftCard, () => {
     let eventG = testUtils.getStreamMessages("giftCard");
-    expect(eventG).toHaveLength(3);
+    let eventT = testUtils.getStreamMessages("giftCardTransaction");
+    expect(eventG).toHaveLength(1);
+    expect(eventT).toHaveLength(2);
     expect(eventG[0].type).toEqual(EventTypeCard.GIFT_CARD_ADDED);
-    expect(eventG[1].type).toEqual(EventTypeCard.GIFT_CARD_REDEEM_PROCESSING);
-    expect(eventG[2].type).toEqual(EventTypeCard.GIFT_CARD_REDEEM_SUCCEDED);
+    expect(eventT[0].type).toEqual(EventTypeCard.GIFT_CARD_REDEEM_PENDING);
+    expect(eventT[1].type).toEqual(EventTypeCard.GIFT_CARD_REDEEM_PROCESSING);
   });
-
-  /* await testUtils.expectIdempotency(runGiftCard, () => {
-    let eventG = testUtils.getStreamMessages("giftCard");
-    let eventC = testUtils.getStreamMessages("creditAccount");
-    expect(eventG).toHaveLength(3);
-    expect(eventG[0].type).toEqual(EventType.GIFT_CARD_ADDED);
-    expect(eventG[1].type).toEqual(EventType.GIFT_CARD_REDEEM_PROCESSING);
-    expect(eventG[2].type).toEqual(EventType.GIFT_CARD_REDEEM_SUCCEDED);
-    expect(eventC).toHaveLength(2);
-    expect(eventG[1].type).toEqual(EventType.GIFT_CARD_REMOVED);
-    expect(eventG[1].data.id).toEqual(idCard);
-  }); */
 });
 
 it("Usare una carta avendo un amount non pervenuto", async () => {
   let idCard = v4();
   let idAccount1 = v4();
+  let idTrans = v4();
   testUtils.setupMessageStore([
     {
       type: EventTypeCredit.CREDITS_EARNED,
@@ -332,38 +326,30 @@ it("Usare una carta avendo un amount non pervenuto", async () => {
     },
     {
       type: CommandTypeCard.REDEEM_GIFT_CARD,
-      stream_name: "giftCard:command-" + idCard,
+      stream_name: "giftCardTransaction:command-" + idCard,
       data: {
         id: idCard,
         userId: idAccount1,
         amount: 55,
+        transactionId: idTrans,
       },
     },
   ]);
 
   await testUtils.expectIdempotency(runGiftCard, () => {
     let eventG = testUtils.getStreamMessages("giftCard");
-    expect(eventG).toHaveLength(3);
+    let eventT = testUtils.getStreamMessages("giftCardTransaction");
+    expect(eventG).toHaveLength(1);
+    expect(eventT).toHaveLength(2);
     expect(eventG[0].type).toEqual(EventTypeCard.GIFT_CARD_ADDED);
-    expect(eventG[1].type).toEqual(EventTypeCard.GIFT_CARD_REDEEM_PROCESSING);
-    expect(eventG[2].type).toEqual(EventTypeCard.GIFT_CARD_REDEEM_FAILED);
+    expect(eventT[0].type).toEqual(EventTypeCard.GIFT_CARD_REDEEM_PENDING);
+    expect(eventT[1].type).toEqual(EventTypeCard.GIFT_CARD_REDEEM_FAILED);
   });
-
-  /* await testUtils.expectIdempotency(runGiftCard, () => {
-    let eventG = testUtils.getStreamMessages("giftCard");
-    let eventC = testUtils.getStreamMessages("creditAccount");
-    expect(eventG).toHaveLength(3);
-    expect(eventG[0].type).toEqual(EventType.GIFT_CARD_ADDED);
-    expect(eventG[1].type).toEqual(EventType.GIFT_CARD_REDEEM_PROCESSING);
-    expect(eventG[2].type).toEqual(EventType.GIFT_CARD_REDEEM_SUCCEDED);
-    expect(eventC).toHaveLength(2);
-    expect(eventG[1].type).toEqual(EventType.GIFT_CARD_REMOVED);
-    expect(eventG[1].data.id).toEqual(idCard);
-  }); */
 });
 
-it("Ritorna false se non è in processing", async () => {
+it("Ritorna false se non è in pending", async () => {
   let idCard = v4();
+  let idTrans = v4();
   testUtils.setupMessageStore([
     {
       type: EventTypeCard.GIFT_CARD_ADDED,
@@ -378,18 +364,58 @@ it("Ritorna false se non è in processing", async () => {
     },
   ]);
 
-  expect(await runVerifyPendingProjector(idCard)).toEqual(false);
+  expect(await runVerifyPendingProjector(idTrans)).toEqual(false);
 });
 
-it("Ritorna true se è in processing", async () => {
-  let idCard = v4();
+it("Ritorna true se è in pending", async () => {
+  let idTrans = v4();
   testUtils.setupMessageStore([
     {
-      type: EventTypeCard.GIFT_CARD_REDEEM_PROCESSING,
-      stream_name: "giftCard-" + idCard,
+      type: EventTypeCard.GIFT_CARD_REDEEM_PENDING,
+      stream_name: "giftCardTransaction-" + idTrans,
       data: {},
     },
   ]);
 
-  expect(await runVerifyPendingProjector(idCard)).toEqual(true);
+  expect(await runVerifyPendingProjector(idTrans)).toEqual(true);
+});
+
+it("Ritorna false se non è in Processing", async () => {
+  let idCard = v4();
+  let idTrans = v4();
+  testUtils.setupMessageStore([
+    {
+      type: EventTypeCard.GIFT_CARD_ADDED,
+      stream_name: "giftCard-" + idCard,
+      data: {
+        id: idCard,
+        name: "Amazon",
+        description: "Carta per comprarti il frigo",
+        image_url: "https://img.it",
+        amounts: [5, 10, 20, 30, 50],
+      },
+    },
+    {
+      type: EventTypeCard.GIFT_CARD_REDEEM_PENDING,
+      stream_name: "giftCardTransaction-" + idTrans,
+      data: {
+        id: idTrans,
+      },
+    },
+  ]);
+
+  expect(await runVerifyProcessingProjector(idTrans)).toEqual(false);
+});
+
+it("Ritorna true se è in Processing", async () => {
+  let idTrans = v4();
+  testUtils.setupMessageStore([
+    {
+      type: EventTypeCard.GIFT_CARD_REDEEM_PROCESSING,
+      stream_name: "giftCardTransaction-" + idTrans,
+      data: { id: idTrans },
+    },
+  ]);
+
+  expect(await runVerifyProcessingProjector(idTrans)).toEqual(true);
 });
