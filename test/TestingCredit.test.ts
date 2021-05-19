@@ -33,6 +33,30 @@ it("Accredito balance ad un dato account", async () => {
   });
 });
 
+it("Accredito balance ad un dato account con id transazione", async () => {
+  let idAccount1 = v4();
+  let idTrans = v4();
+  testUtils.setupMessageStore([
+    {
+      type: CommandTypeCredit.EARN_CREDITS,
+      stream_name: "creditAccount:command-" + idAccount1,
+      data: {
+        id: idAccount1,
+        amountCredit: 30,
+        transactionId: idTrans,
+      },
+    },
+  ]);
+
+  await testUtils.expectIdempotency(runCredits, () => {
+    let event = testUtils.getStreamMessages("creditAccount");
+    expect(event).toHaveLength(1);
+    expect(event[0].type).toEqual(EventTypeCredit.CREDITS_EARNED);
+    expect(event[0].data.id).toEqual(idAccount1);
+    expect(event[0].data.amountCredit).toEqual(30);
+  });
+});
+
 it("Accredito balance negativo ad un dato account", async () => {
   let idAccount1 = v4();
   testUtils.setupMessageStore([
@@ -125,6 +149,40 @@ it("Addebito balance oltre il minimo balance ad un dato account", async () => {
       data: {
         id: idAccount1,
         amountCredit: 100,
+      },
+    },
+  ]);
+
+  await testUtils.expectIdempotency(runCredits, () => {
+    let event = testUtils.getStreamMessages("creditAccount");
+    expect(event).toHaveLength(2);
+    expect(event[1].type).toEqual(EventTypeCredit.CREDITS_USED);
+    expect(event[1].data.id).toEqual(idAccount1);
+  });
+
+  expect(await runBalanceProjector(idAccount1)).toEqual(30);
+});
+
+it("Addebito balance oltre il minimo balance con id transazione", async () => {
+  let idAccount1 = v4();
+  let idTrans = v4();
+  testUtils.setupMessageStore([
+    {
+      type: EventTypeCredit.CREDITS_EARNED,
+      stream_name: "creditAccount-" + idAccount1,
+      data: {
+        id: idAccount1,
+        amountCredit: 130,
+        transactionId: idTrans,
+      },
+    },
+    {
+      type: CommandTypeCredit.USE_CREDITS,
+      stream_name: "creditAccount:command-" + idAccount1,
+      data: {
+        id: idAccount1,
+        amountCredit: 100,
+        transactionId: idTrans,
       },
     },
   ]);

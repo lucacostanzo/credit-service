@@ -5,6 +5,7 @@ export enum CommandTypeCard {
   UPDATE_GIFT_CARD = "UPDATE_GIFT_CARD",
   REMOVE_GIFT_CARD = "REMOVE_GIFT_CARD",
   REDEEM_GIFT_CARD = "REDEEM_GIFT_CARD",
+  DELIVERY_GIFT_CARD = "DELIVERY_GIFT_CARD",
 }
 
 export type UpdateGiftCard = Message<
@@ -15,6 +16,15 @@ export type UpdateGiftCard = Message<
     description: string;
     image_url: string;
     amounts: number[];
+  }
+>;
+
+export type DeliveryGiftCard = Message<
+  CommandTypeCard.DELIVERY_GIFT_CARD,
+  {
+    id: string;
+    transactionId: string;
+    idCard: string;
   }
 >;
 export type RemoveGiftCard = Message<
@@ -40,7 +50,8 @@ export type CommandCard =
   | UpdateGiftCard
   | RemoveGiftCard
   | AddedGiftCard
-  | RedeemGiftCard;
+  | RedeemGiftCard
+  | DeliveryGiftCard;
 
 export enum EventTypeCard {
   GIFT_CARD_ERROR = "GIFT_CARD_ERROR",

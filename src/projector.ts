@@ -81,3 +81,33 @@ export async function runVerifyProcessingProjector(
     false
   );
 }
+
+export async function runVerifyDeliveryProjector(id: string): Promise<boolean> {
+  function reducer(prev: boolean, next: EventCard) {
+    if (next.type === EventTypeCard.GIFT_CARD_REDEEM_SUCCEDED) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+  return runProjector(
+    { streamName: `giftCardTransaction-${id}` },
+    reducer,
+    false
+  );
+}
+
+export async function runVerifyErrorProjector(id: string): Promise<boolean> {
+  function reducer(prev: boolean, next: EventCard) {
+    if (next.type === EventTypeCard.GIFT_CARD_REDEEM_FAILED) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+  return runProjector(
+    { streamName: `giftCardTransaction-${id}` },
+    reducer,
+    false
+  );
+}
