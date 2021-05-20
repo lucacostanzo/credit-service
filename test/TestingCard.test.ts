@@ -4,7 +4,7 @@ import { runGiftCard } from "../src/index2";
 import { CommandTypeCredit, EventTypeCredit } from "../src/typesCredits";
 import { CommandTypeCard, EventTypeCard } from "../src/typesCard";
 
-it("Aggiungere una carta", async () => {
+it("should add a card", async () => {
   let idCard = v4();
   testUtils.setupMessageStore([
     {
@@ -30,7 +30,7 @@ it("Aggiungere una carta", async () => {
   });
 });
 
-it("Rimuovere una carta non esistente", async () => {
+it("shouldn't remove a card if not exist", async () => {
   let idCard = v4();
   testUtils.setupMessageStore([
     {
@@ -50,7 +50,7 @@ it("Rimuovere una carta non esistente", async () => {
   });
 });
 
-it("Rimuovere una carta", async () => {
+it("should remove a card", async () => {
   let idCard = v4();
   testUtils.setupMessageStore([
     {
@@ -81,7 +81,7 @@ it("Rimuovere una carta", async () => {
   });
 });
 
-it("Update di una carta", async () => {
+it("should update a card", async () => {
   let idCard = v4();
   testUtils.setupMessageStore([
     {
@@ -114,7 +114,7 @@ it("Update di una carta", async () => {
   });
 });
 
-it("Update di una carta che non esiste", async () => {
+it("shouldn't update a card if not exist", async () => {
   let idCard = v4();
   testUtils.setupMessageStore([
     {
@@ -136,7 +136,7 @@ it("Update di una carta che non esiste", async () => {
   });
 });
 
-it("Usare una carta avendo un amount non pervenuto", async () => {
+it("shouldn't use a card if the amount not exist", async () => {
   let idCard = v4();
   let idAccount1 = v4();
   let idTrans = v4();
@@ -183,7 +183,7 @@ it("Usare una carta avendo un amount non pervenuto", async () => {
   });
 });
 
-it("Usare una carta avendo tutto in regola", async () => {
+it("should use a card if all stuffs are ok", async () => {
   let idCard = v4();
   let idTrans = v4();
   let idAccount1 = v4();
@@ -258,7 +258,7 @@ it("Usare una carta avendo tutto in regola", async () => {
   });
 });
 
-it("Emette use credit esistendo la carta e il taglio", async () => {
+it("should emit useCredit if the card exists and there is a valid amount", async () => {
   let idTrans = v4();
   let idAccount1 = v4();
   let idCard = v4();
@@ -295,7 +295,7 @@ it("Emette use credit esistendo la carta e il taglio", async () => {
   });
 });
 
-it("Delivery una carta non in processing", async () => {
+it("shouldn't delivery a card if is not in state of processing", async () => {
   let idCard = v4();
   let idTrans = v4();
   let idAccount1 = v4();
@@ -318,7 +318,7 @@ it("Delivery una carta non in processing", async () => {
   });
 });
 
-it("Imposta un redeem se i crediti sono stati usati", async () => {
+it("set redeem if the credits are used", async () => {
   let idCard = v4();
   let idTrans = v4();
   let idAccount1 = v4();

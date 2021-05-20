@@ -10,7 +10,7 @@ import {
 } from "../src/projector";
 import { CommandTypeCard, EventTypeCard } from "../src/typesCard";
 
-it("Trovare una carta esistente", async () => {
+it("should find a existing card", async () => {
   let idCard = v4();
   testUtils.setupMessageStore([
     {
@@ -29,7 +29,7 @@ it("Trovare una carta esistente", async () => {
   expect(await runCardExistProjector(idCard)).toEqual(true);
 });
 
-it("Trovare una carta non esistente", async () => {
+it("shouldn't find a card if not exist", async () => {
   let idCard = v4();
   let idCardinesistente = v4();
   testUtils.setupMessageStore([
@@ -49,7 +49,7 @@ it("Trovare una carta non esistente", async () => {
   expect(await runCardExistProjector(idCardinesistente)).toEqual(false);
 });
 
-it("Trovare una carta esistente ma adesso rimossa", async () => {
+it("shouldn't find a card if was removed", async () => {
   let idCard = v4();
   testUtils.setupMessageStore([
     {
@@ -75,7 +75,7 @@ it("Trovare una carta esistente ma adesso rimossa", async () => {
   expect(await runCardExistProjector(idCard)).toEqual(false);
 });
 
-it("Verifica se un taglio esiste", async () => {
+it("should verify if the amount exists", async () => {
   let idCard = v4();
   testUtils.setupMessageStore([
     {
@@ -94,7 +94,7 @@ it("Verifica se un taglio esiste", async () => {
   expect(await runVerifyAmountProjector(idCard, 10)).toEqual(true);
 });
 
-it("Verifica se un taglio non esiste", async () => {
+it("shouldn't verify an amount if not exists", async () => {
   let idCard = v4();
   testUtils.setupMessageStore([
     {
@@ -113,7 +113,7 @@ it("Verifica se un taglio non esiste", async () => {
   expect(await runVerifyAmountProjector(idCard, 12)).toEqual(false);
 });
 
-it("Ritorna false se non è in pending", async () => {
+it("should return false if isn't in pending state", async () => {
   let idCard = v4();
   let idTrans = v4();
   testUtils.setupMessageStore([
@@ -133,7 +133,7 @@ it("Ritorna false se non è in pending", async () => {
   expect(await runVerifyPendingProjector(idTrans)).toEqual(false);
 });
 
-it("Ritorna true se è in pending", async () => {
+it("should return true if is in pending state", async () => {
   let idTrans = v4();
   testUtils.setupMessageStore([
     {
@@ -146,7 +146,7 @@ it("Ritorna true se è in pending", async () => {
   expect(await runVerifyPendingProjector(idTrans)).toEqual(true);
 });
 
-it("Ritorna false se non è in Processing", async () => {
+it("should return false if isn't in processing state", async () => {
   let idCard = v4();
   let idTrans = v4();
   testUtils.setupMessageStore([
@@ -173,7 +173,7 @@ it("Ritorna false se non è in Processing", async () => {
   expect(await runVerifyProcessingProjector(idTrans)).toEqual(false);
 });
 
-it("Ritorna true se è in Processing", async () => {
+it("should return true if is in processing state", async () => {
   let idTrans = v4();
   testUtils.setupMessageStore([
     {
@@ -186,7 +186,7 @@ it("Ritorna true se è in Processing", async () => {
   expect(await runVerifyProcessingProjector(idTrans)).toEqual(true);
 });
 
-it("Ritorna false se non è in Delivery", async () => {
+it("should return false if isn't yet delivered", async () => {
   let idCard = v4();
   let idTrans = v4();
   testUtils.setupMessageStore([
@@ -213,7 +213,7 @@ it("Ritorna false se non è in Delivery", async () => {
   expect(await runVerifyDeliveryProjector(idTrans)).toEqual(false);
 });
 
-it("Ritorna true se è in delivery", async () => {
+it("should return true if is already delivered", async () => {
   let idTrans = v4();
   testUtils.setupMessageStore([
     {
@@ -226,7 +226,7 @@ it("Ritorna true se è in delivery", async () => {
   expect(await runVerifyDeliveryProjector(idTrans)).toEqual(true);
 });
 
-it("Ritorna false se non c'è stato un errore", async () => {
+it("should return false if there isn't an error", async () => {
   let idTrans = v4();
   testUtils.setupMessageStore([
     {
@@ -239,7 +239,7 @@ it("Ritorna false se non c'è stato un errore", async () => {
   expect(await runVerifyErrorProjector(idTrans)).toEqual(false);
 });
 
-it("Ritorna true se c'è stato un errore", async () => {
+it("should return true if there is an error", async () => {
   let idTrans = v4();
   testUtils.setupMessageStore([
     {

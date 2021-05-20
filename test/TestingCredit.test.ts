@@ -4,14 +4,14 @@ import { runCredits } from "../src";
 import { runBalanceProjector } from "../src/projector";
 import { CommandTypeCredit, EventTypeCredit } from "../src/typesCredits";
 
-it("All'istante zero, tutti gli account hanno un balance di zero crediti", async () => {
+it("should return 0 at start", async () => {
   let idAccount1 = v4();
   testUtils.setupMessageStore([]);
 
   expect(await runBalanceProjector(idAccount1)).toEqual(0);
 });
 
-it("Accredito balance ad un dato account", async () => {
+it("should earn a number of credits to a specific account", async () => {
   let idAccount1 = v4();
   testUtils.setupMessageStore([
     {
@@ -33,7 +33,7 @@ it("Accredito balance ad un dato account", async () => {
   });
 });
 
-it("Accredito balance ad un dato account con id transazione", async () => {
+it("should earn a number of credits to a specific account with a transaction id", async () => {
   let idAccount1 = v4();
   let idTrans = v4();
   testUtils.setupMessageStore([
@@ -57,7 +57,7 @@ it("Accredito balance ad un dato account con id transazione", async () => {
   });
 });
 
-it("Accredito balance negativo ad un dato account", async () => {
+it("shouldn't earn a number of credits to a specific account if the number is negative", async () => {
   let idAccount1 = v4();
   testUtils.setupMessageStore([
     {
@@ -76,7 +76,7 @@ it("Accredito balance negativo ad un dato account", async () => {
   });
 });
 
-it("Addebito sotto al minimo balance ad un dato account", async () => {
+it("shouldn't use a number of credits of a specific account if isn't up to minimum account", async () => {
   let idAccount1 = v4();
   testUtils.setupMessageStore([
     {
@@ -100,7 +100,7 @@ it("Addebito sotto al minimo balance ad un dato account", async () => {
   });
 });
 
-it("Addebito balance oltre il minimo e oltre il balance ad un dato account", async () => {
+it("should use a number of credits to a specific account if the account have the correct balance", async () => {
   let idAccount1 = v4();
   testUtils.setupMessageStore([
     {
@@ -132,38 +132,7 @@ it("Addebito balance oltre il minimo e oltre il balance ad un dato account", asy
   expect(await runBalanceProjector(idAccount1)).toEqual(100);
 });
 
-it("Addebito balance oltre il minimo balance ad un dato account", async () => {
-  let idAccount1 = v4();
-  testUtils.setupMessageStore([
-    {
-      type: EventTypeCredit.CREDITS_EARNED,
-      stream_name: "creditAccount-" + idAccount1,
-      data: {
-        id: idAccount1,
-        amountCredit: 130,
-      },
-    },
-    {
-      type: CommandTypeCredit.USE_CREDITS,
-      stream_name: "creditAccount:command-" + idAccount1,
-      data: {
-        id: idAccount1,
-        amountCredit: 100,
-      },
-    },
-  ]);
-
-  await testUtils.expectIdempotency(runCredits, () => {
-    let event = testUtils.getStreamMessages("creditAccount");
-    expect(event).toHaveLength(2);
-    expect(event[1].type).toEqual(EventTypeCredit.CREDITS_USED);
-    expect(event[1].data.id).toEqual(idAccount1);
-  });
-
-  expect(await runBalanceProjector(idAccount1)).toEqual(30);
-});
-
-it("Addebito balance oltre il minimo balance con id transazione", async () => {
+it("should use a number of credits to a specific account with a transaction id", async () => {
   let idAccount1 = v4();
   let idTrans = v4();
   testUtils.setupMessageStore([
@@ -197,7 +166,7 @@ it("Addebito balance oltre il minimo balance con id transazione", async () => {
   expect(await runBalanceProjector(idAccount1)).toEqual(30);
 });
 
-it("Calcolo balance di un utente", async () => {
+it("should calculate the balance of a specific account", async () => {
   let idAccount1 = v4();
   let idAccount2 = v4();
   testUtils.setupMessageStore([
@@ -238,7 +207,7 @@ it("Calcolo balance di un utente", async () => {
   expect(await runBalanceProjector(idAccount1)).toEqual(100);
 });
 
-it("Calcolo balance misto di un utente", async () => {
+it("should calculate the balance (mix of use and earn) of a specific account", async () => {
   let idAccount1 = v4();
   let idAccount2 = v4();
   testUtils.setupMessageStore([
@@ -279,7 +248,7 @@ it("Calcolo balance misto di un utente", async () => {
   expect(await runBalanceProjector(idAccount1)).toEqual(20);
 });
 
-it("Calcolo balance misto di un utente in tempo passato", async () => {
+it("should calculate the balance of a specific account only if the deadline is valid", async () => {
   let idAccount1 = v4();
   let timePast = new Date();
   timePast.setMonth(timePast.getMonth() - 14);
