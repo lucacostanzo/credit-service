@@ -9,9 +9,9 @@ export async function runBalanceProjector(id: string): Promise<number> {
   function reducer(res: number, next: EventCredits) {
     if (next.time >= datetime) {
       if (next.type === EventTypeCredit.CREDITS_USED) {
-        res -= next.data.amountCredit;
+        res -= next.data.amount;
       } else if (next.type === EventTypeCredit.CREDITS_EARNED) {
-        res += next.data.amountCredit;
+        res += next.data.amount;
       }
     }
     return Math.max(0, res);

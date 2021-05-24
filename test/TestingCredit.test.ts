@@ -19,7 +19,7 @@ it("should earn a number of credits to a specific account", async () => {
       stream_name: "creditAccount:command-" + idAccount1,
       data: {
         id: idAccount1,
-        amountCredit: 30,
+        amount: 30,
       },
     },
   ]);
@@ -29,7 +29,7 @@ it("should earn a number of credits to a specific account", async () => {
     expect(event).toHaveLength(1);
     expect(event[0].type).toEqual(EventTypeCredit.CREDITS_EARNED);
     expect(event[0].data.id).toEqual(idAccount1);
-    expect(event[0].data.amountCredit).toEqual(30);
+    expect(event[0].data.amount).toEqual(30);
   });
 });
 
@@ -42,7 +42,7 @@ it("should earn a number of credits to a specific account with a transaction id"
       stream_name: "creditAccount:command-" + idAccount1,
       data: {
         id: idAccount1,
-        amountCredit: 30,
+        amount: 30,
         transactionId: idTrans,
       },
     },
@@ -53,7 +53,7 @@ it("should earn a number of credits to a specific account with a transaction id"
     expect(event).toHaveLength(1);
     expect(event[0].type).toEqual(EventTypeCredit.CREDITS_EARNED);
     expect(event[0].data.id).toEqual(idAccount1);
-    expect(event[0].data.amountCredit).toEqual(30);
+    expect(event[0].data.amount).toEqual(30);
   });
 });
 
@@ -65,7 +65,7 @@ it("shouldn't earn a number of credits to a specific account if the number is ne
       stream_name: "creditAccount:command-" + idAccount1,
       data: {
         id: idAccount1,
-        amountCredit: -30,
+        amount: -30,
       },
     },
   ]);
@@ -84,7 +84,7 @@ it("shouldn't use a number of credits of a specific account if isn't up to minim
       stream_name: "creditAccount:command-" + idAccount1,
       data: {
         id: idAccount1,
-        amountCredit: 30,
+        amount: 30,
       },
     },
   ]);
@@ -108,7 +108,7 @@ it("should use a number of credits to a specific account if the account have the
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
-        amountCredit: 100,
+        amount: 100,
       },
     },
     {
@@ -116,7 +116,7 @@ it("should use a number of credits to a specific account if the account have the
       stream_name: "creditAccount:command-" + idAccount1,
       data: {
         id: idAccount1,
-        amountCredit: 130,
+        amount: 130,
       },
     },
   ]);
@@ -141,7 +141,7 @@ it("should use a number of credits to a specific account with a transaction id",
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
-        amountCredit: 130,
+        amount: 130,
         transactionId: idTrans,
       },
     },
@@ -150,7 +150,7 @@ it("should use a number of credits to a specific account with a transaction id",
       stream_name: "creditAccount:command-" + idAccount1,
       data: {
         id: idAccount1,
-        amountCredit: 100,
+        amount: 100,
         transactionId: idTrans,
       },
     },
@@ -175,7 +175,7 @@ it("should calculate the balance of a specific account", async () => {
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
-        amountCredit: 30,
+        amount: 30,
       },
     },
     {
@@ -183,7 +183,7 @@ it("should calculate the balance of a specific account", async () => {
       stream_name: "creditAccount-" + idAccount2,
       data: {
         id: idAccount2,
-        amountCredit: 30,
+        amount: 30,
       },
     },
     {
@@ -191,7 +191,7 @@ it("should calculate the balance of a specific account", async () => {
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
-        amountCredit: 20,
+        amount: 20,
       },
     },
     {
@@ -199,7 +199,7 @@ it("should calculate the balance of a specific account", async () => {
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
-        amountCredit: 50,
+        amount: 50,
       },
     },
   ]);
@@ -216,7 +216,7 @@ it("should calculate the balance (mix of use and earn) of a specific account", a
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
-        amountCredit: 70,
+        amount: 70,
       },
     },
     {
@@ -224,7 +224,7 @@ it("should calculate the balance (mix of use and earn) of a specific account", a
       stream_name: "creditAccount-" + idAccount2,
       data: {
         id: idAccount2,
-        amountCredit: 30,
+        amount: 30,
       },
     },
     {
@@ -232,7 +232,7 @@ it("should calculate the balance (mix of use and earn) of a specific account", a
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
-        amountCredit: 50,
+        amount: 50,
       },
     },
     {
@@ -240,7 +240,7 @@ it("should calculate the balance (mix of use and earn) of a specific account", a
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
-        amountCredit: 100,
+        amount: 100,
       },
     },
   ]);
@@ -258,7 +258,7 @@ it("should calculate the balance of a specific account only if the deadline is v
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
-        amountCredit: 70,
+        amount: 70,
       },
       time: timePast,
     },
@@ -267,7 +267,7 @@ it("should calculate the balance of a specific account only if the deadline is v
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
-        amountCredit: 300,
+        amount: 300,
       },
     },
     {
@@ -275,7 +275,7 @@ it("should calculate the balance of a specific account only if the deadline is v
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
-        amountCredit: 50,
+        amount: 50,
       },
       time: timePast,
     },
@@ -285,7 +285,7 @@ it("should calculate the balance of a specific account only if the deadline is v
       stream_name: "creditAccount-" + idAccount1,
       data: {
         id: idAccount1,
-        amountCredit: 100,
+        amount: 100,
       },
     },
   ]);

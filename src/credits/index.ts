@@ -13,6 +13,7 @@ import { CommandCredits, CommandTypeCredit, EventTypeCredit } from "./types";
 
 async function businnesLogic(cmd: CommandCredits) {
   const MIN_USE_CREDITS_AMOUNT = 100;
+  console.log("=>", cmd);
 
   if (
     await isLastMessageAfterGlobalPosition(`creditAccount-${cmd.data.id}`, cmd)
@@ -22,7 +23,7 @@ async function businnesLogic(cmd: CommandCredits) {
 
   switch (cmd.type) {
     case CommandTypeCredit.EARN_CREDITS:
-      if (cmd.data.amountCredit > 0) {
+      if (cmd.data.amount > 0) {
         return emitEvent({
           category: "creditAccount",
           id: cmd.data.id,
@@ -30,7 +31,7 @@ async function businnesLogic(cmd: CommandCredits) {
           data: {
             id: cmd.data.id,
             transactionId: cmd.data.transactionId ?? v4(),
-            amountCredit: cmd.data.amountCredit,
+            amount: cmd.data.amount,
           },
         });
       } else {
@@ -38,10 +39,7 @@ async function businnesLogic(cmd: CommandCredits) {
       }
     case CommandTypeCredit.USE_CREDITS:
       let balance = await runBalanceProjector(cmd.data.id);
-      if (
-        balance >= MIN_USE_CREDITS_AMOUNT &&
-        balance - cmd.data.amountCredit > 0
-      ) {
+      if (balance >= MIN_USE_CREDITS_AMOUNT && balance - cmd.data.amount > 0) {
         return emitEvent({
           category: "creditAccount",
           id: cmd.data.id,
@@ -49,7 +47,7 @@ async function businnesLogic(cmd: CommandCredits) {
           data: {
             id: cmd.data.id,
             transactionId: cmd.data.transactionId ?? v4(),
-            amountCredit: cmd.data.amountCredit,
+            amount: cmd.data.amount,
           },
         });
       } else {
