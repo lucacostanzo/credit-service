@@ -7,8 +7,8 @@ import {
   runVerifyErrorProjector,
   runVerifyPendingProjector,
   runVerifyProcessingProjector,
-} from "../src/projector";
-import { CommandTypeCard, EventTypeCard } from "../src/typesCard";
+} from "../src/giftCard/projector";
+import { CommandTypeCard, EventTypeCard } from "../src/giftCard/types";
 
 it("should find a existing card", async () => {
   let idCard = v4();

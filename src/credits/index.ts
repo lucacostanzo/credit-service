@@ -7,13 +7,9 @@ import {
   combineSubscriber,
 } from "@keix/message-store-client";
 import { v4 } from "uuid";
-import { runBalanceProjector } from "./projector";
+import { runBalanceProjector } from "../credits/projector";
 
-import {
-  CommandCredits,
-  CommandTypeCredit,
-  EventTypeCredit,
-} from "./typesCredits";
+import { CommandCredits, CommandTypeCredit, EventTypeCredit } from "./types";
 
 async function businnesLogic(cmd: CommandCredits) {
   const MIN_USE_CREDITS_AMOUNT = 100;

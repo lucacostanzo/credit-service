@@ -21,14 +21,14 @@ import {
   CommandCredits,
   CommandTypeCredit,
   EventTypeCredit,
-} from "./typesCredits";
+} from "../credits/types";
 
 import {
   EventCard,
   CommandCard,
   CommandTypeCard,
   EventTypeCard,
-} from "./typesCard";
+} from "./types";
 
 async function businnesLogic(cmd: CommandCard) {
   if (await isLastMessageAfterGlobalPosition(`giftCard-${cmd.data.id}`, cmd)) {
