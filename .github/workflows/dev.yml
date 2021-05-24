@@ -1,0 +1,89 @@
+# This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: Development
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  dev:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [14.x]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@keixdata"
+
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+
+      - uses: actions/cache@v1
+        id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Installing Rancher CLI...
+        run: wget -nv https://releases.rancher.com/cli2/v$RANCHER_VERSION/rancher-linux-amd64-v$RANCHER_VERSION.tar.gz; tar -xvzf rancher-linux-amd64-v$RANCHER_VERSION.tar.gz; sudo cp rancher-v$RANCHER_VERSION/rancher /usr/local/bin/rancher
+        env:
+          RANCHER_VERSION: 2.4.3
+
+      - name: Login to Rancher CLI...
+        run: rancher login ${{ secrets.RANCHER_ENDPOINT }} --token ${{ secrets.RANCHER_TOKEN }} --context $PROJECT_ID
+        env:
+          PROJECT_ID: c-f2pvq:p-mqrvg
+
+      - name: Installing Dependencies...
+        run: yarn
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.YARN_AUTH_TOKEN }}
+
+      - name: Test
+        run: yarn test
+        env:
+          ELASTIC_HOST: ${{ secrets.DEV_ELASTIC_ENDPOINT }}
+          ELASTIC_PORT: 80
+
+      - name: Build
+        run: yarn build
+
+      - name: Publish
+        run: npm publish || echo "::warning::Skipping package publishing because version already exists..."
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker Build and Push
+        uses: docker/build-push-action@v1.1.0
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          repository: keixdata/credit-service
+          tags: ${{ github.run_number }},latest
+          cache_froms: keixdata/credit-service:latest
+        env:
+          DOCKER_BUILDKIT: 1
+
+      - name: Preparing Deploy
+        uses: microsoft/variable-substitution@v1
+        with:
+          files: "deployment.yaml"
+        env:
+          spec.template.spec.containers.0.image: "keixdata/credit-service:${{ github.run_number }}"
+
+      - name: Rancher Deploy
+        run: rancher kubectl apply -f deployment.yaml
