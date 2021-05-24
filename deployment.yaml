@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: default
+  name: credits-service
+  labels:
+    app: credits-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: credits-service
+  template:
+    metadata:
+      labels:
+        app: credits-service
+    spec:
+      imagePullSecrets:
+        - name: docker-keix
+      containers:
+        - env:
+            - name: HOST
+              value: "message-store.default.svc.cluster.local:8080"
+          name: credits-service
+          image: ${CICD_IMAGE}:${CICD_EXECUTION_SEQUENCE}
