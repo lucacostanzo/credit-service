@@ -38,6 +38,13 @@ export async function hasProcessedTransaction(
 }
 
 async function handler(event: EventCredits) {
+  if (
+    (event.type == EventTypeCredit.CREDITS_EARNED ||
+      event.type == EventTypeCredit.CREDITS_USED) &&
+    (await hasProcessedTransaction(event.data.id, event.data.transactionId))
+  ) {
+    return;
+  }
   switch (event.type) {
     case EventTypeCredit.CREDITS_EARNED: {
       await redisClient.hincrby(
@@ -45,22 +52,12 @@ async function handler(event: EventCredits) {
         event.data.id,
         event.data.amount
       );
-
-      if (
-        !(await hasProcessedTransaction(
-          event.data.id,
-          event.data.transactionId
-        ))
-      ) {
-        let key = `creditAccount-${event.data.id}`;
-        let transaction: UserTransaction = {
-          id: event.data.transactionId,
-          amount: event.data.amount,
-        };
-        return await redisClient.rpush(key, JSON.stringify(transaction));
-      }
-      console.log(await getUserAmount(event.data.id));
-      break;
+      let key = `creditAccount-${event.data.id}`;
+      let transaction: UserTransaction = {
+        id: event.data.transactionId,
+        amount: event.data.amount,
+      };
+      return await redisClient.rpush(key, JSON.stringify(transaction));
     }
 
     case EventTypeCredit.CREDITS_USED: {
@@ -69,21 +66,13 @@ async function handler(event: EventCredits) {
         event.data.id,
         -event.data.amount
       );
-      if (
-        !(await hasProcessedTransaction(
-          event.data.id,
-          event.data.transactionId
-        ))
-      ) {
-        let key = `creditAccount-${event.data.id}`;
-        let transaction: UserTransaction = {
-          id: event.data.transactionId,
-          amount: -event.data.amount,
-        };
-        return await redisClient.rpush(key, JSON.stringify(transaction));
-      }
-      console.log(await getUserAmount(event.data.id));
-      break;
+
+      let key = `creditAccount-${event.data.id}`;
+      let transaction: UserTransaction = {
+        id: event.data.transactionId,
+        amount: -event.data.amount,
+      };
+      return await redisClient.rpush(key, JSON.stringify(transaction));
     }
   }
 }

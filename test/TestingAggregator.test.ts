@@ -50,6 +50,10 @@ it("should return the amount of credits", async () => {
 it("should return the transaction list", async () => {
   let idAccount = v4();
   let idTransaction = v4();
+  let idTransaction1 = v4();
+  let idTransaction2 = v4();
+  let idTransaction3 = v4();
+  let idTransaction4 = v4();
   testUtils.setupMessageStore([
     {
       type: EventTypeCredit.CREDITS_EARNED,
@@ -65,7 +69,7 @@ it("should return the transaction list", async () => {
       stream_name: "creditAccount-" + idAccount,
       data: {
         id: idAccount,
-        transactionId: idTransaction,
+        transactionId: idTransaction1,
         amount: 150,
       },
     },
@@ -74,7 +78,7 @@ it("should return the transaction list", async () => {
       stream_name: "creditAccount-" + idAccount,
       data: {
         id: idAccount,
-        transactionId: idTransaction,
+        transactionId: idTransaction2,
         amount: 120,
       },
     },
@@ -83,7 +87,16 @@ it("should return the transaction list", async () => {
       stream_name: "creditAccount-" + idAccount,
       data: {
         id: idAccount,
-        transactionId: idTransaction,
+        transactionId: idTransaction3,
+        amount: 20,
+      },
+    },
+    {
+      type: EventTypeCredit.CREDITS_USED,
+      stream_name: "creditAccount-" + idAccount,
+      data: {
+        id: idAccount,
+        transactionId: idTransaction4,
         amount: 20,
       },
     },
@@ -92,9 +105,10 @@ it("should return the transaction list", async () => {
   await testUtils.expectIdempotency(run, async () => {
     expect(await getUserTransaction(idAccount)).toEqual([
       { id: idTransaction, amount: 30 },
-      { id: idTransaction, amount: 150 },
-      { id: idTransaction, amount: 120 },
-      { id: idTransaction, amount: 20 },
+      { id: idTransaction1, amount: 150 },
+      { id: idTransaction2, amount: 120 },
+      { id: idTransaction3, amount: 20 },
+      { id: idTransaction4, amount: -20 },
     ]);
   });
 });
